@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Friendship Paradox: An Interactive Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<style>
+:root{
+  --paper:#EDF2F5; --sheet:#F9FBFC; --ink:#1B2A3A; --muted:#566676; --grid:#D2DDE5; --grid-minor:#E3EAF0;
+  --er:#2F8A4C; --sf:#6A3D9E; --hub:#D21F3C; --node:#2C5F8E; --path:#C8700A; --edge:rgba(27,42,58,.22); --focus:#1F6FB2;
+  --display:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1A24; --sheet:#152330; --ink:#E2E9EF; --muted:#94A4B3; --grid:#2A3B4A; --grid-minor:#1E2D3A;
+    --er:#5FC07B; --sf:#B591E6; --hub:#FF5C6C; --node:#7DB0E0; --path:#F2A23A; --edge:rgba(226,233,239,.2); --focus:#E8C46A; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1A24; --sheet:#152330; --ink:#E2E9EF; --muted:#94A4B3; --grid:#2A3B4A; --grid-minor:#1E2D3A;
+  --er:#5FC07B; --sf:#B591E6; --hub:#FF5C6C; --node:#7DB0E0; --path:#F2A23A; --edge:rgba(226,233,239,.2); --focus:#E8C46A; color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{
+  margin:0; background:var(--paper); color:var(--ink); font-family:var(--body); font-size:16px; line-height:1.6;
+  background-image:
+    linear-gradient(var(--grid-minor) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
+  background-size:24px 24px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1120px; margin:0 auto; padding:0 20px}
+h1,h2,h3{font-family:var(--display); font-weight:600; line-height:1.15; margin:0; letter-spacing:-.01em}
+h1{font-size:clamp(42px,7.5vw,80px); letter-spacing:-.02em}
+.credit{font-size:14px; color:var(--muted); margin-top:10px}
+h2{font-size:clamp(28px,4.2vw,40px); margin-bottom:.4em}
+h3{font-size:21px; margin-bottom:.35em}
+p{margin:0 0 1em; max-width:68ch}
+.lede{font-size:18px; color:var(--muted); max-width:60ch}
+header{padding:56px 0 24px}
+section{padding:56px 0 8px}
+.sheet{background:var(--sheet); border:1px solid var(--grid); border-radius:6px; padding:18px}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:18px}
+.hero-grid{display:grid; grid-template-columns:3fr 2fr; gap:18px; align-items:start}
+@media (max-width:780px){ .two, .hero-grid{grid-template-columns:1fr} }
+.note{font-size:14px; color:var(--muted); margin:0 0 10px}
+canvas{display:block; width:100%; max-width:100%}
+.netcv{aspect-ratio:1/1; cursor:crosshair; touch-action:none}
+.chart{aspect-ratio:4/3}
+.chart.wide{aspect-ratio:16/7}
+@media (max-width:780px){ .chart.wide{aspect-ratio:4/3} }
+.scroll{overflow-x:auto}
+.scroll svg.graph{min-width:620px}
+svg.graph{display:block; width:100%; height:auto; overflow:visible}
+svg.graph [data-n]{cursor:pointer}
+svg.graph [data-n]:focus{outline:none}
+svg.graph [data-n]:focus-visible circle.body{stroke:var(--focus); stroke-width:4}
+.controls{display:flex; flex-wrap:wrap; gap:18px 26px; align-items:end; margin:18px 0}
+.ctl{display:flex; flex-direction:column; gap:4px; font-size:14px; color:var(--muted); min-width:170px}
+.ctl output{color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums}
+input[type=range]{width:100%; accent-color:var(--sf)}
+select{font:inherit; font-size:15px; color:var(--ink); background:var(--sheet); border:1px solid var(--grid); border-radius:4px; padding:5px 8px}
+.check{flex-direction:row; align-items:center; gap:8px; min-width:0; color:var(--ink)}
+button{
+  font-family:var(--body); font-size:15px; font-weight:600; color:var(--sheet); background:var(--ink);
+  border:0; border-radius:4px; padding:9px 18px; cursor:pointer;
+}
+button:hover{background:var(--sf)}
+button:focus-visible, input:focus-visible, select:focus-visible, .seg input:focus-visible + span{outline:3px solid var(--focus); outline-offset:2px}
+.seg{display:inline-flex; border:1px solid var(--grid); border-radius:4px; background:var(--sheet); overflow:hidden}
+.seg label{position:relative; cursor:pointer}
+.seg input{position:absolute; opacity:0; inset:0; margin:0; cursor:pointer}
+.seg span{display:block; padding:6px 13px; font-size:15px; color:var(--ink); border-right:1px solid var(--grid)}
+.seg label:last-child span{border-right:0}
+.seg input:checked + span{background:var(--ink); color:var(--sheet)}
+.legend{display:flex; flex-wrap:wrap; gap:6px 18px; font-size:14px; color:var(--muted); margin:6px 0 0}
+.legend > span{display:inline-flex; align-items:center; gap:6px}
+.swatch{display:inline-block; width:12px; height:12px; border-radius:50%; vertical-align:-1px}
+.line-key{display:inline-block; width:22px; height:0; border-top:3px solid currentColor}
+.line-key.dash{border-top-style:dashed}
+.callout{font-family:var(--display); font-size:21px; line-height:1.4; margin:14px 0 4px; max-width:46ch}
+.callout .num{color:var(--hub); font-weight:700}
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+.chip{border:1.5px solid var(--grid); border-radius:999px; padding:3px 12px; font-size:14px; font-variant-numeric:tabular-nums; background:var(--sheet)}
+.chip.on{border-color:var(--hub); color:var(--hub)}
+.katex{font-size:1.1em}
+.formula.big{display:block; font-size:18px; margin:6px 0 16px; overflow-x:auto; overflow-y:hidden; padding:4px 0; max-width:100%}
+.formula.big .katex-display{margin:0}
+.formula.big .katex-display.fleqn > .katex{padding-left:0}
+.callout .katex, .legend .katex, .note .katex{font-size:1em}
+.tip{position:fixed; pointer-events:none; background:var(--ink); color:var(--sheet); font-size:13px; padding:3px 8px; border-radius:4px; opacity:0; transition:opacity .1s; z-index:5}
+.ranks{width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums}
+.ranks th{font-weight:500; color:var(--muted); text-align:left; padding:4px 6px 6px; border-bottom:1px solid var(--grid); vertical-align:bottom}
+.ranks th.cur{color:var(--ink); font-weight:600; box-shadow:inset 0 -3px 0 var(--hub)}
+.ranks td{padding:5px 6px; border-bottom:1px solid var(--grid-minor)}
+.ranks td:first-child{color:var(--muted); width:2.2em}
+.nodebtn{font-size:14px; font-weight:600; padding:1px 8px; border-radius:999px; background:transparent; color:var(--ink); border:1.5px solid var(--grid); min-width:2.6em}
+.nodebtn:hover, .nodebtn.on{background:var(--hub); border-color:var(--hub); color:#fff}
+.val{color:var(--muted); margin-left:4px}
+.detail{margin-top:14px; font-size:15px; min-height:4.8em}
+.detail b{font-variant-numeric:tabular-nums}
+.bars{display:grid; grid-template-columns:minmax(150px,auto) 1fr 3.2em; gap:4px 10px; font-size:14px; align-items:center}
+.bars .bar{height:12px; border-radius:2px; background:var(--muted); opacity:.55}
+.bars .mine{font-weight:600}
+.bars .mine.er .bar{background:var(--er); opacity:1}
+.bars .mine.sf .bar{background:var(--sf); opacity:1}
+.bars .num{text-align:right; font-variant-numeric:tabular-nums}
+code{font-size:14px; background:var(--grid-minor); padding:1px 5px; border-radius:3px}
+footer{padding:48px 0 64px; font-size:14px; color:var(--muted)}
+footer p{max-width:80ch}
+.status{font-size:13px; color:var(--muted); min-height:1.4em}
+@media (prefers-reduced-motion: reduce){ .tip{transition:none} }
+
+.eq{padding:12px 0; border-bottom:1px solid var(--grid-minor)}
+.eq:last-of-type{border-bottom:0}
+.eq .what{font-size:14px; color:var(--muted); margin-bottom:2px}
+.eq .formula{white-space:normal; line-height:1.9; font-size:16px}
+.eq .res{font-weight:700} .res.k{color:var(--ink)} .res.kf{color:var(--sf)} .res.kn{color:var(--er)}
+.res.k{color:var(--ink)} .res.kf{color:var(--sf)} .res.kn{color:var(--er)}
+.tabs{margin:14px 0 10px}
+.stat{display:grid; grid-template-columns:1fr auto; gap:4px 14px; font-size:15px; font-variant-numeric:tabular-nums}
+.stat div:nth-child(odd){color:var(--muted)}
+.stat div:nth-child(even){text-align:right; font-weight:600}
+.stat .sep{grid-column:1 / -1; border-top:1px solid var(--grid); margin:4px 0}
+blockquote{font-family:var(--display); font-size:22px; line-height:1.45; margin:24px 0 6px; max-width:44ch; padding-left:18px; border-left:3px solid var(--sf)}
+.cite{font-size:14px; color:var(--muted); margin-left:21px}
+.legend > span{display:inline-block}
+.legend .swatch, .legend .line-key{margin-right:6px; vertical-align:middle}
+.stat .sep ~ div:nth-child(even){color:var(--muted); text-align:left; font-weight:400}
+.stat .sep ~ div:nth-child(odd){color:var(--ink); text-align:right; font-weight:600}
+.box{border:1px solid var(--grid); background:var(--sheet); border-radius:6px; padding:14px 18px; margin:14px 0; max-width:780px}
+.box p:last-child{margin-bottom:0}
+</style>
+</head>
+<body>
+<div class="tip" id="tip"></div>
+
+<header class="wrap">
+  <h1>The friendship paradox</h1>
+  <p class="credit">Created by Claude Opus 5.5, based on the lecture slides and papers by Sang Hoon Lee.</p>
+  <p class="lede" style="margin-top:18px">“My friends seem to have more friends than I do. Is it just me?” No: on average it is true for almost everyone, and it is a matter of arithmetic, not of luck. Ask each person how many friends they have, then ask how many friends their friends have.</p>
+
+  <div class="controls">
+    <div class="ctl">Network
+      <div class="seg" role="radiogroup" aria-label="Small network">
+        <label><input type="radio" name="heroNet" value="star" checked><span>Four people</span></label>
+        <label><input type="radio" name="heroNet" value="seven"><span>Seven friends</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-grid">
+    <div class="sheet">
+      <svg class="graph" id="heroSvg" viewBox="0 0 480 360" role="group" aria-label="Small friendship network"></svg>
+      <p class="note" id="heroPick" style="margin-top:8px"></p>
+    </div>
+    <div class="sheet">
+      <div class="eq"><div class="what">How many friends do you have? Average over people.</div><div class="formula" id="eqK"></div></div>
+      <div class="eq"><div class="what">How many friends does each friend have? List every friend of every person, then average the list.</div><div class="formula" id="eqKF"></div></div>
+      <div class="eq"><div class="what">How many friends do your friends usually have? Average each person’s friends first, then average over people.</div><div class="formula" id="eqKN"></div></div>
+    </div>
+  </div>
+  <p class="callout" id="heroText"></p>
+</header>
+
+<main class="wrap">
+
+<section id="sampling">
+  <h2>It is a sampling bias</h2>
+  <p>Pick a person at random and every person is equally likely: their degree follows the degree distribution \(p(k)\). Pick a friend instead and you arrive by following a link, and a person with \(k\) friends can be reached along \(k\) different links. So a friend is \(k\) times more likely to have \(k\) friends, and the friend’s degree follows</p>
+  <p class="formula big">\[ q(k) = \frac{k\,p(k)}{\langle k\rangle}, \qquad \langle k_\text{friend}\rangle = \sum_k k\,q(k) = \frac{\langle k^2\rangle}{\langle k\rangle} \ge \langle k\rangle \]</p>
+  <p>The inequality holds because \(\langle k^2\rangle - \langle k\rangle^2 = \langle (k-\langle k\rangle)^2\rangle \ge 0\). In fact the gap is exactly \(\langle k_\text{friend}\rangle - \langle k\rangle = \sigma_k^2/\langle k\rangle\): the more unequal the degrees, the stronger the paradox. Hubs are simply easier to see. Run the survey yourself below with three ways of sampling.</p>
+  <div class="controls">
+    <label class="ctl">Network
+      <select id="sNet">
+        <option value="sf" selected>Scale-free, 10,000 people</option>
+        <option value="er">Random, 10,000 people</option>
+        <option value="karate">Zachary’s karate club, 34</option>
+        <option value="football">College football, 115 teams</option>
+      </select></label>
+    <button id="sMore" type="button">Survey 1,000 more</button>
+    <button id="sReset" type="button">Start over</button>
+    <span class="status" id="sStatus"></span>
+  </div>
+  <div class="two">
+    <div class="sheet">
+      <h3>Who you meet</h3>
+      <canvas id="sDist" class="chart" aria-label="Sampled degree distributions"></canvas>
+      <div class="legend">
+        <span style="color:var(--node)"><span class="swatch" style="background:var(--node)"></span>Random person, with \(p(k)\)</span>
+        <span style="color:var(--sf)"><span class="swatch" style="background:var(--sf)"></span>End of a random friendship, with \(q(k)\)</span>
+      </div>
+    </div>
+    <div class="sheet">
+      <h3>Running averages</h3>
+      <canvas id="sMean" class="chart" aria-label="Running averages of sampled degrees"></canvas>
+      <div class="legend">
+        <span style="color:var(--node)"><span class="line-key"></span>Random person → \(\langle k\rangle\)</span>
+        <span style="color:var(--sf)"><span class="line-key"></span>End of a random friendship → \(\langle k_\text{friend}\rangle\)</span>
+        <span style="color:var(--er)"><span class="line-key"></span>Random friend of a random person → \(\langle k_\text{nn}\rangle\)</span>
+        <span style="color:var(--muted)"><span class="line-key dash"></span>Exact values</span>
+      </div>
+    </div>
+  </div>
+  <p class="callout" id="sText"></p>
+  <blockquote>“Friends are by definition friendly people, and your circle of friends will be a biased sample of the population because of it.”</blockquote>
+  <p class="cite">M. E. J. Newman, Social Networks 25, 83 (2003)</p>
+</section>
+
+<section id="twoways">
+  <h2>Two ways to average your friends’ friends</h2>
+  <p>The third sampler above did not land on \(\langle k_\text{friend}\rangle\). Picking a random person and then one of their friends weights every person equally, not every friendship. That gives the second classical version of the paradox, which Feld also wrote down in 1991, the mean of each individual’s mean number of friends’ friends:</p>
+  <p class="formula big">\[ \langle k_\text{nn}\rangle = \frac{1}{N}\sum_i k_\text{nn}(i) = \frac{1}{N}\sum_i \frac{1}{k_i}\sum_j a_{ij}k_j = \frac{1}{N}\sum_{(i,j)\in E}\left(\frac{k_j}{k_i}+\frac{k_i}{k_j}\right) \ge \frac{2M}{N} = \langle k\rangle \]</p>
+  <p>Each edge contributes \(x + 1/x\) with \(x = k_j/k_i\), and \(x + 1/x \ge 2\) for every \(x>0\), so this version holds too. Kumar, Krackhardt and Feld call \(\langle k_\text{friend}\rangle\) the alter-based mean and \(\langle k_\text{nn}\rangle\) the ego-based mean. They are not the same number. Feld’s own example keeps the degrees fixed (four people with three friends and twelve with one) and only changes who is friends with whom. The alter-based mean stays at 2; the ego-based mean does not.</p>
+  <div class="controls">
+    <div class="ctl">Arrangement from Feld (1991), Fig. 4
+      <div class="seg" role="radiogroup" aria-label="Feld arrangement">
+        <label><input type="radio" name="feld" value="0"><span>(a) Perfect positive</span></label>
+        <label><input type="radio" name="feld" value="1"><span>(b) Zero</span></label>
+        <label><input type="radio" name="feld" value="2"><span>(c) Negative</span></label>
+        <label><input type="radio" name="feld" value="3" checked><span>(d) Perfect negative</span></label>
+      </div>
+    </div>
+  </div>
+  <div class="hero-grid">
+    <div class="sheet">
+      <svg class="graph" id="feldSvg" viewBox="0 0 520 270" role="group" aria-label="Feld's arrangement"></svg>
+      <div class="legend">
+        <span><span class="swatch" style="background:var(--node)"></span>Three friends</span>
+        <span><span class="swatch" style="background:var(--node);opacity:.3"></span>One friend</span>
+        <span style="color:var(--hub)"><span class="swatch" style="background:transparent;border:2.5px solid var(--hub)"></span>Fewer friends than their friends’ average</span>
+      </div>
+      <p class="note" id="feldPick" style="margin-top:8px"></p>
+    </div>
+    <div class="sheet">
+      <div class="stat" id="feldStat"></div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:36px">The exact gap between the two</h3>
+  <p>Multiply \(k_\text{nn}(i)\) by \(k_i\) and sum over nodes: \(\sum_i k_i\,k_\text{nn}(i) = \sum_{i,j} a_{ij}k_j = \sum_i k_i^2\), so \(\langle k\,k_\text{nn}\rangle = \langle k^2\rangle\) and \(\langle k_\text{friend}\rangle = \langle k\,k_\text{nn}\rangle/\langle k\rangle\). Subtract \(\langle k_\text{nn}\rangle\) and the difference is a covariance:</p>
+  <p class="formula big">\[ \langle k_\text{friend}\rangle - \langle k_\text{nn}\rangle = \frac{\mathrm{Cov}_\text{n}(k, k_\text{nn})}{\langle k\rangle} \]</p>
+  <p>When well-connected people befriend each other (assortative mixing), the covariance is positive and the alter-based mean is larger. When hubs befriend loners (disassortative mixing), it is negative and the ego-based mean wins. Kumar, Krackhardt and Feld wrote the same gap with degree moments \(\kappa_m = \langle k^m\rangle\) and the inversity \(\rho\), the correlation over oriented edges between one end’s degree and the other end’s inverse degree:</p>
+  <p class="formula big">\[ \langle k_\text{nn}\rangle - \langle k_\text{friend}\rangle = \rho\,\sqrt{\frac{\kappa_1\kappa_3-\kappa_2^2}{\kappa_1}\left(\kappa_{-1}-\kappa_1^{-1}\right)} \]</p>
+  <p>The two forms are identical. Below, rewire a 1,000-node scale-free network without changing anyone’s number of friends, and watch all three agree.</p>
+  <div class="controls">
+    <button id="rAss" type="button">Rewire toward assortative</button>
+    <button id="rDis" type="button">Rewire toward disassortative</button>
+    <button id="rReset" type="button">Start over</button>
+    <span class="status" id="rStatus"></span>
+  </div>
+  <div class="sheet">
+    <canvas id="rCv" class="chart wide" aria-label="Alter-based and ego-based means versus degree assortativity"></canvas>
+    <div class="legend">
+      <span style="color:var(--sf)"><span class="line-key"></span>Alter-based \(\langle k_\text{friend}\rangle\)</span>
+      <span style="color:var(--er)"><span class="line-key"></span>Ego-based \(\langle k_\text{nn}\rangle\)</span>
+      <span style="color:var(--muted)"><span class="line-key dash"></span>\(\langle k\rangle\)</span>
+      <span>Each swap keeps every degree; only who links to whom changes.</span>
+    </div>
+  </div>
+  <p class="callout" id="rText"></p>
+
+  <h3 style="margin-top:36px">The extreme case: a complete bipartite network</h3>
+  <p>Connect every member of a group of \(m\) to every member of a group of \(n\). Every link joins a degree-\(n\) node to a degree-\(m\) node, so the degree assortativity is \(r = -1\), and</p>
+  <p class="formula big">\[ \langle k_\text{nn}\rangle = \frac{1}{m+n}\left(\frac{m}{n}\,mn + \frac{n}{m}\,nm\right) = \frac{m^2+n^2}{m+n} = \frac{mn^3+nm^3}{mn^2+nm^2} = \frac{\langle k^3\rangle}{\langle k^2\rangle} \]</p>
+  <p>With \(m = 1\) it is a star: the four-person network at the top is \(K_{1,3}\). NetworkX’s <code>nx.complete_bipartite_graph(4, 5)</code> gives \(\langle k_\text{nn}\rangle = 4.5556\), the same as \(\langle k^3\rangle/\langle k^2\rangle\).</p>
+  <div class="controls">
+    <label class="ctl">Group size m <output id="bmOut">4</output>
+      <input type="range" id="bmIn" min="1" max="8" step="1" value="4"></label>
+    <label class="ctl">Group size n <output id="bnOut">5</output>
+      <input type="range" id="bnIn" min="1" max="10" step="1" value="5"></label>
+  </div>
+  <div class="two">
+    <div class="sheet"><svg class="graph" id="bipSvg" viewBox="0 0 300 380" role="img" aria-label="Complete bipartite network" style="max-height:380px"></svg></div>
+    <div class="sheet"><div class="stat" id="bipStat"></div></div>
+  </div>
+</section>
+
+<section id="majority">
+  <h2>Do most people’s friends have more friends?</h2>
+  <p>Both classical versions are statements about averages. The everyday phrasing, “your friends have more friends than you”, sounds like a claim about most people, and the averages do not guarantee it. Two majority-type fractions make the claim precise. The global one compares each node with the mean of its neighbors:</p>
+  <p class="formula big">\[ \phi_\text{global} = \frac{1}{N}\sum_i \mathbf{1}_{\{k_i < k_\text{nn}(i)\}} \]</p>
+  <p>The local one uses the hub centrality \(h_i\), the share of a node’s neighbors with strictly fewer friends. If \(h_i < 1/2\), most of the node’s friends have at least as many friends as it does, a median-based kind of domination:</p>
+  <p class="formula big">\[ h_i = \frac{1}{k_i}\sum_{j\in\mathcal{N}(i)} \mathbf{1}_{\{k_j < k_i\}}, \qquad \phi_\text{local} = \frac{1}{N}\sum_i \mathbf{1}_{\{h_i < 1/2\}} \]</p>
+  <p>Neither fraction is constrained by the classical paradox, and they need not agree with each other. A single very popular friend raises the mean of a node’s neighbor degrees but barely moves the median. Each dot below is a node, placed by its two contrasts: the four quadrants are the four combinations of mean-based and median-based domination.</p>
+  <div class="controls">
+    <label class="ctl">Network
+      <select id="mNet">
+        <option value="toy">Five-node toy network</option>
+        <option value="karate" selected>Zachary’s karate club</option>
+        <option value="football">College football (Division I, 2000)</option>
+        <option value="sf">Scale-free, 300 nodes</option>
+        <option value="er">Random, 300 nodes</option>
+      </select></label>
+    <button id="mRegen" type="button">Regenerate</button>
+  </div>
+  <div class="two">
+    <div class="sheet">
+      <canvas id="mNetCv" class="netcv" aria-label="Network colored by type of domination"></canvas>
+    </div>
+    <div class="sheet">
+      <canvas id="mQuad" class="chart" style="aspect-ratio:1/1" aria-label="Hub centrality versus degree minus mean neighbor degree"></canvas>
+    </div>
+  </div>
+  <div class="legend">
+    <span style="color:var(--hub)"><span class="swatch" style="background:var(--hub)"></span>Dominated both ways: \(k_i < k_\text{nn}(i)\) and \(h_i < 1/2\)</span>
+    <span style="color:var(--path)"><span class="swatch" style="background:var(--path)"></span>By the mean only</span>
+    <span style="color:var(--node)"><span class="swatch" style="background:var(--node)"></span>By the median only</span>
+    <span><span class="swatch" style="background:var(--muted)"></span>Neither</span>
+    <span>Hover or tap a node in the drawing to find its dot.</span>
+  </div>
+  <div class="two" style="margin-top:18px; align-items:start">
+    <div class="sheet"><div class="stat" id="mStat"></div></div>
+    <p class="callout" id="mText" style="margin-top:0"></p>
+  </div>
+</section>
+
+<section id="generalized">
+  <h2>Your friends are also richer, busier and more cited</h2>
+  <p>The paradox spreads to anything that goes along with having many friends: wealth, productivity, citations, happiness on social media. If an attribute \(x\) tends to grow with degree, your friends tend to have more of it than you do. This is the generalized friendship paradox, which Eom and Jo found among coauthors: most scientists’ collaborators have more papers and citations than they do. Below, each person gets a made-up attribute that follows their degree as strongly as you choose, with a skewed, log-normal spread like income or citations.</p>
+  <div class="controls">
+    <label class="ctl">Network
+      <select id="gNet">
+        <option value="sf" selected>Scale-free, 2,000 people</option>
+        <option value="er">Random, 2,000 people</option>
+        <option value="football">College football, 115 teams</option>
+      </select></label>
+    <label class="ctl">How closely \(x\) follows degree <output id="gROut">0.6</output>
+      <input type="range" id="gRIn" min="0" max="1" step="0.05" value="0.6"></label>
+    <button id="gNoise" type="button">Draw new attributes</button>
+  </div>
+  <div class="two">
+    <div class="sheet">
+      <h3>Who looks better off than you</h3>
+      <canvas id="gCv" class="chart" aria-label="Share of people outdone by their friends versus correlation"></canvas>
+      <div class="legend">
+        <span style="color:var(--hub)"><span class="line-key"></span>Friends’ mean x exceeds yours</span>
+        <span style="color:var(--node)"><span class="line-key"></span>Most friends have more x than you</span>
+      </div>
+    </div>
+    <div class="sheet">
+      <div class="stat" id="gStat"></div>
+      <p class="note" style="margin-top:14px">Even with no link to degree, the mean-based share sits above one half: in a skewed distribution the mean is pulled up by a few large values, so a typical person falls below their friends’ mean. The median-based share starts below one half, because it needs strictly more than half of your friends to beat you, and climbs only as x follows degree more closely.</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="wrap">
+  <p>Created by Claude Opus 5.5, based on the lecture slides and papers by Sang Hoon Lee.</p>
+  <p>Everything is computed in your browser. Generated networks use Barabási–Albert preferential attachment (m = 2) and Erdős–Rényi G(N, M) with ⟨k⟩ = 4, keeping the largest connected component. The karate club and college football data are the standard versions distributed with NetworkX and by M. E. J. Newman; their values match Table 1 of the paper below. Rewiring uses degree-preserving double-edge swaps that pair the two highest-degree endpoints (assortative) or the highest with the lowest (disassortative). Degree assortativity r is Newman’s edge-based Pearson coefficient.</p>
+  <p>S. L. Feld, Am. J. Sociol. 96, 1464 (1991). V. Kumar, D. Krackhardt and S. Feld, Proc. Natl. Acad. Sci. USA 121, e2306412121 (2024). S. H. Lee, New Phys.: Sae Mulli 76, 169 (2026). S. H. Lee, J. Korean Phys. Soc. 88, 890 (2026). M. E. J. Newman, Phys. Rev. Lett. 89, 208701 (2002). Y.-H. Eom and H.-H. Jo, Sci. Rep. 4, 4603 (2014). See also the companion explorer at <a href="https://lshlj82.github.io/friendship-paradox/" style="color:inherit">lshlj82.github.io/friendship-paradox</a>.</p>
+</footer>
+
+<script>
+(() => {
+"use strict";
+
+/* ---------- math typesetting (KaTeX, with plain TeX as the fallback) ---------- */
+const MATH_OPTS = { delimiters: [{ left: "\\[", right: "\\]", display: true }, { left: "\\(", right: "\\)", display: false }], throwOnError: false, fleqn: true, trust: c => c.command === "\\htmlClass" };
+function typeset(el){ if (window.renderMathInElement && el) renderMathInElement(el, MATH_OPTS); }
+function setMath(el, html){ el.innerHTML = html; typeset(el); }
+const $ = id => document.getElementById(id);
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let RNG = Math.random;
+const rnd = n => (RNG() * n) | 0;
+function mulberry32(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function seeded(seed, fn){ const old = RNG; RNG = mulberry32(seed); try { return fn(); } finally { RNG = old; } }
+const pause = () => new Promise(r => setTimeout(r, 0));
+const fmt = (v, d = 3) => v === 0 ? "0" : v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(d);
+
+/* ---------- graphs ---------- */
+function build(N, edges){
+  const deg = new Int32Array(N);
+  for (let i = 0; i < edges.length; i++) deg[edges[i]]++;
+  const off = new Int32Array(N + 1);
+  for (let i = 0; i < N; i++) off[i + 1] = off[i] + deg[i];
+  const fill = off.slice(0, N), nbr = new Int32Array(edges.length), eid = new Int32Array(edges.length);
+  for (let i = 0; i < edges.length; i += 2){
+    const a = edges[i], b = edges[i + 1];
+    eid[fill[a]] = i >> 1; nbr[fill[a]++] = b;
+    eid[fill[b]] = i >> 1; nbr[fill[b]++] = a;
+  }
+  return { N, deg, off, nbr, eid, edges: Int32Array.from(edges) };
+}
+function EdgeSet(N){ const seen = new Set(), e = []; return { e, add(a, b){ if (a === b) return false; if (a > b){ const t = a; a = b; b = t; } const k = a * N + b; if (seen.has(k)) return false; seen.add(k); e.push(a, b); return true; } }; }
+function genER(N, kavg){
+  const M = Math.min(Math.round(N * kavg / 2), N * (N - 1) / 2), S = EdgeSet(N);
+  while (S.e.length < 2 * M) S.add(rnd(N), rnd(N));
+  return build(N, S.e);
+}
+function genBA(N, m){
+  const edges = [], ends = [], m0 = m + 1;
+  for (let i = 0; i < m0; i++) for (let j = 0; j < i; j++){ edges.push(i, j); ends.push(i, j); }
+  const chosen = new Set();
+  for (let v = m0; v < N; v++){
+    chosen.clear();
+    while (chosen.size < m) chosen.add(ends[rnd(ends.length)]);
+    for (const t of chosen){ edges.push(v, t); ends.push(v, t); }
+  }
+  return build(N, edges);
+}
+function largestComponent(g){
+  const comp = new Int32Array(g.N).fill(-1), q = new Int32Array(g.N);
+  let best = -1, bestSize = 0, c = 0;
+  for (let s = 0; s < g.N; s++){
+    if (comp[s] >= 0) continue;
+    let h = 0, t = 0; q[t++] = s; comp[s] = c;
+    while (h < t){ const v = q[h++]; for (let p = g.off[v]; p < g.off[v + 1]; p++){ const u = g.nbr[p]; if (comp[u] < 0){ comp[u] = c; q[t++] = u; } } }
+    if (t > bestSize){ bestSize = t; best = c; }
+    c++;
+  }
+  if (bestSize === g.N) return g;
+  const map = new Int32Array(g.N).fill(-1); let n = 0;
+  for (let i = 0; i < g.N; i++) if (comp[i] === best) map[i] = n++;
+  const e = [];
+  for (let i = 0; i < g.edges.length; i += 2){ const a = map[g.edges[i]]; if (a >= 0) e.push(a, map[g.edges[i + 1]]); }
+  return build(n, e);
+}
+
+/* ---------- theme helpers ---------- */
+let C = {};
+function readColors(){
+  const cs = getComputedStyle(document.documentElement);
+  ["ink","muted","grid","grid-minor","er","sf","hub","node","path","edge","sheet"].forEach(k => C[k] = cs.getPropertyValue("--" + k).trim());
+}
+readColors();
+function setup(cv){
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)){ cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+const bodyFont = () => getComputedStyle(document.body).fontFamily;
+
+/* ---------- charting ---------- */
+const SUP = { "-":"⁻", "0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹" };
+function fmtLog(v){
+  const e = Math.round(Math.log10(v));
+  if (Math.abs(Math.log10(v) - e) > 1e-9) return String(+v.toPrecision(2));
+  if (e >= 0 && e <= 4) return Math.pow(10, e).toLocaleString("en-US");
+  return "10" + String(e).split("").map(c => SUP[c]).join("");
+}
+function niceStep(range, n){
+  const raw = range / n, p = Math.pow(10, Math.floor(Math.log10(raw))), r = raw / p;
+  return (r < 1.5 ? 1 : r < 3 ? 2 : r < 7 ? 5 : 10) * p;
+}
+function makeAxis(a, p0, p1){
+  const tf = a.log ? Math.log10 : v => v;
+  const t0 = tf(a.min), t1 = tf(a.max);
+  const f = v => p0 + (tf(v) - t0) / (t1 - t0) * (p1 - p0);
+  const major = [], minor = [];
+  if (a.log){
+    for (let e = Math.floor(t0); e <= Math.ceil(t1); e++){
+      const base = Math.pow(10, e);
+      if (base >= a.min * 0.999 && base <= a.max * 1.001) major.push(base);
+      if (t1 - t0 <= 6) for (let m = 2; m <= 9; m++){ const v = m * base; if (v > a.min && v < a.max) minor.push(v); }
+    }
+    const step = Math.ceil(major.length / 7);
+    f.major = major.filter((_, i) => i % step === 0);
+    f.fmt = a.fmt || fmtLog;
+  } else {
+    const st = niceStep(a.max - a.min, a.n || 5);
+    for (let v = Math.ceil(a.min / st) * st; v <= a.max + 1e-9; v += st) major.push(+v.toPrecision(10));
+    f.major = major; f.fmt = a.fmt || (v => v.toLocaleString("en-US"));
+  }
+  f.minor = minor; f.min = a.min; f.max = a.max;
+  return f;
+}
+// axis labels: text between asterisks is set as an italic math variable, the rest upright
+function richText(ctx, s, x, y){
+  const parts = String(s).split("*"), fonts = parts.map((_, i) => i % 2 ? "italic 15px 'Times New Roman', Times, serif" : "13px " + bodyFont());
+  let w = 0; parts.forEach((p, i) => { ctx.font = fonts[i]; w += ctx.measureText(p).width; });
+  let cx = x - w / 2; ctx.textAlign = "left";
+  parts.forEach((p, i) => { ctx.font = fonts[i]; ctx.fillText(p, cx, y); cx += ctx.measureText(p).width; });
+}
+function plot(cv, o){
+  const { ctx, w, h } = setup(cv);
+  const pad = Object.assign({ l: 56, r: 24, t: 12, b: o.x.label ? 46 : 28 }, o.pad || {});
+  ctx.font = "12px " + bodyFont();
+  if (!o.y.hideTicks && !(o.pad && o.pad.l)){ const Y0 = makeAxis(o.y, 1, 0); pad.l = Math.max(pad.l, 34 + Math.max(...Y0.major.map(v => ctx.measureText(Y0.fmt(v)).width))); }
+  const X = makeAxis(o.x, pad.l, w - pad.r), Y = makeAxis(o.y, h - pad.b, pad.t);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = C["grid-minor"];
+  ctx.beginPath();
+  X.minor.forEach(v => { const x = Math.round(X(v)) + .5; ctx.moveTo(x, pad.t); ctx.lineTo(x, h - pad.b); });
+  Y.minor.forEach(v => { const y = Math.round(Y(v)) + .5; ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); });
+  ctx.stroke();
+  ctx.strokeStyle = C.grid;
+  ctx.beginPath();
+  X.major.forEach(v => { const x = Math.round(X(v)) + .5; ctx.moveTo(x, pad.t); ctx.lineTo(x, h - pad.b); });
+  Y.major.forEach(v => { const y = Math.round(Y(v)) + .5; ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); });
+  ctx.stroke();
+  ctx.fillStyle = C.muted; ctx.font = "12px " + bodyFont();
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  if (!o.x.hideTicks) X.major.forEach(v => ctx.fillText(X.fmt(v), X(v), h - pad.b + 6));
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  if (!o.y.hideTicks) Y.major.forEach(v => ctx.fillText(Y.fmt(v), pad.l - 6, Y(v)));
+  ctx.textBaseline = "bottom"; ctx.fillStyle = C.ink;
+  if (o.x.label) richText(ctx, o.x.label, (pad.l + w - pad.r) / 2, h - 4);
+  if (o.y.label){ ctx.save(); ctx.translate(14, (pad.t + h - pad.b) / 2); ctx.rotate(-Math.PI / 2); ctx.textBaseline = "middle"; richText(ctx, o.y.label, 0, 0); ctx.restore(); }
+  ctx.save();
+  ctx.beginPath(); ctx.rect(pad.l, pad.t, w - pad.l - pad.r, h - pad.t - pad.b); ctx.clip();
+  const ok = (x, y) => isFinite(x) && isFinite(y) && (!o.x.log || x > 0) && (!o.y.log || y > 0);
+  for (const s of o.series){
+    const col = C[s.color] || s.color;
+    if (s.type === "line"){
+      ctx.strokeStyle = col; ctx.lineWidth = s.width || 2.2; ctx.setLineDash(s.dash ? [6, 5] : []);
+      ctx.lineJoin = "round"; ctx.beginPath(); let pen = false;
+      for (const [x, y] of s.pts){
+        if (!ok(x, y)){ pen = false; continue; }
+        const px = X(x), py = Math.max(-1e4, Math.min(1e4, Y(y)));
+        pen ? ctx.lineTo(px, py) : ctx.moveTo(px, py); pen = true;
+      }
+      ctx.stroke(); ctx.setLineDash([]);
+    } else if (s.type === "bars"){
+      ctx.fillStyle = col; ctx.globalAlpha = s.alpha || 1;
+      for (const [x0, x1, y] of s.pts){ if (y <= 0) continue; const a = X(x0), b = X(x1); ctx.fillRect(a + 1, Y(y), Math.max(1, b - a - 2), Y(o.y.min) - Y(y)); }
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.fillStyle = col; ctx.globalAlpha = s.alpha || 1;
+      const r = s.r || 3;
+      for (const [x, y] of s.pts){
+        if (!ok(x, y)) continue;
+        ctx.beginPath();
+        if (s.shape === "diamond"){ const px = X(x), py = Y(y); ctx.moveTo(px, py - r * 1.25); ctx.lineTo(px + r, py); ctx.lineTo(px, py + r * 1.25); ctx.lineTo(px - r, py); }
+        else ctx.arc(X(x), Y(y), r, 0, 7);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+  ctx.restore();
+  if (o.after) o.after(ctx, X, Y, w, h, pad);
+}
+
+function forceTick(g, s, L){
+  const { x, y, vx, vy } = s, N = g.N, a = s.alpha, rep = 220;
+  for (let i = 0; i < N; i++){
+    for (let j = i + 1; j < N; j++){
+      let dx = x[i] - x[j], dy = y[i] - y[j]; const d2 = dx * dx + dy * dy + 0.01;
+      if (d2 > 10000) continue;
+      const d = Math.sqrt(d2), f = rep / d2 * a / d;
+      dx *= f; dy *= f; vx[i] += dx; vy[i] += dy; vx[j] -= dx; vy[j] -= dy;
+    }
+  }
+  const E = g.edges;
+  for (let e = 0; e < E.length; e += 2){
+    const i = E[e], j = E[e + 1];
+    const dx = x[j] - x[i], dy = y[j] - y[i], d = Math.sqrt(dx * dx + dy * dy) + 0.01;
+    const k = (d - L) / d * 0.08 * a / Math.sqrt(Math.min(g.deg[i], g.deg[j]));
+    vx[i] += dx * k; vy[i] += dy * k; vx[j] -= dx * k; vy[j] -= dy * k;
+  }
+  for (let i = 0; i < N; i++){
+    vx[i] -= x[i] * 0.004 * a; vy[i] -= y[i] * 0.004 * a;
+    vx[i] *= 0.6; vy[i] *= 0.6; x[i] += vx[i]; y[i] += vy[i];
+  }
+}
+/* ---------- small SVG graphs ---------- */
+const NS = "http://www.w3.org/2000/svg";
+function svgEl(tag, attrs, parent){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function makeSmall(svg, pos, edgeList, onPick){
+  const N = pos.length, flat = []; edgeList.forEach(([a, b]) => flat.push(a, b));
+  const g = build(N, flat);
+  svg.addEventListener("click", e => { const n = e.target.closest("[data-n]"); if (n) onPick(+n.dataset.n); });
+  svg.addEventListener("keydown", e => { const n = e.target.closest("[data-n]"); if (n && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); onPick(+n.dataset.n); } });
+  return { g, pos, render(o){
+    const focused = document.activeElement && svg.contains(document.activeElement) ? document.activeElement.dataset.n : null;
+    svg.textContent = "";
+    const eg = svgEl("g", {}, svg);
+    edgeList.forEach(([a, b], e) => {
+      svgEl("line", { x1: pos[a][0], y1: pos[a][1], x2: pos[b][0], y2: pos[b][1], style: `stroke:${o.edgeColor ? o.edgeColor(e) : "var(--muted)"};stroke-width:${o.edgeWidth ? o.edgeWidth(e) : 2};stroke-linecap:round;stroke-opacity:${o.edgeOpacity ? o.edgeOpacity(e) : .55}` }, eg);
+    });
+    if (o.edgeLabel) edgeList.forEach(([a, b], e) => { const t = o.edgeLabel(e); if (!t) return;
+      const mx = (pos[a][0] + pos[b][0]) / 2, my = (pos[a][1] + pos[b][1]) / 2;
+      const tx = svgEl("text", { x: mx, y: my - 10, "text-anchor": "middle", style: "fill:var(--path);font:600 14px var(--body);paint-order:stroke;stroke:var(--sheet);stroke-width:4px" }, svg); tx.textContent = t; });
+    for (let i = 0; i < N; i++){
+      const r = o.r ? o.r(i) : 18;
+      const ng = svgEl("g", { "data-n": i, tabindex: 0, role: "button", "aria-label": o.aria ? o.aria(i) : `Node ${i + 1}` }, svg);
+      svgEl("circle", { cx: pos[i][0], cy: pos[i][1], r: r + 8, style: "fill:transparent" }, ng);
+      svgEl("circle", { class: "body", cx: pos[i][0], cy: pos[i][1], r, style: `fill:var(--sheet);stroke:${o.stroke ? o.stroke(i) : "var(--ink)"};stroke-width:${o.strokeW ? o.strokeW(i) : 2.5}` }, ng);
+      if (o.fill){ const [col, op] = o.fill(i); svgEl("circle", { cx: pos[i][0], cy: pos[i][1], r: r - 1, style: `fill:${col};fill-opacity:${op};pointer-events:none` }, ng); }
+      if (o.inner){ const [t, col] = o.inner(i); if (t !== ""){ const tx = svgEl("text", { x: pos[i][0], y: pos[i][1] + 1, "text-anchor": "middle", "dominant-baseline": "middle", style: `fill:${col || "var(--ink)"};font:600 ${r > 14 ? 16 : 12}px var(--body);pointer-events:none` }, ng); tx.textContent = t; } }
+      if (o.outer){ const t = o.outer(i); if (t){ const [dx, dy] = o.outerAt ? o.outerAt(i) : [0, -r - 9];
+        const tx = svgEl("text", { x: pos[i][0] + dx, y: pos[i][1] + dy, "text-anchor": "middle", style: "fill:var(--muted);font:13px var(--body);pointer-events:none;paint-order:stroke;stroke:var(--sheet);stroke-width:4px" }, ng); tx.textContent = t; } }
+    }
+    if (o.badge) for (let i = 0; i < N; i++){ const t = o.badge(i); if (!t) continue; const r = o.r ? o.r(i) : 18;
+      const tx = svgEl("text", { x: pos[i][0] + r + 3, y: pos[i][1] - r + 2, style: "fill:var(--path);font:700 14px var(--body);pointer-events:none;paint-order:stroke;stroke:var(--sheet);stroke-width:4px" }, svg); tx.textContent = t; }
+    if (focused !== null){ const el = svg.querySelector(`[data-n="${focused}"]`); if (el) el.focus({ preventScroll: true }); }
+  } };
+}
+
+
+const DATA = {"karate":{"n":34,"e":[0,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,10,0,11,0,12,0,13,0,17,0,19,0,21,0,31,1,2,1,3,1,7,1,13,1,17,1,19,1,21,1,30,2,3,2,7,2,8,2,9,2,13,2,27,2,28,2,32,3,7,3,12,3,13,4,6,4,10,5,6,5,10,5,16,6,16,8,30,8,32,8,33,9,33,13,33,14,32,14,33,15,32,15,33,18,32,18,33,19,33,20,32,20,33,22,32,22,33,23,25,23,27,23,29,23,32,23,33,24,25,24,27,24,31,25,31,26,29,26,33,27,33,28,31,28,33,29,32,29,33,30,32,30,33,31,32,31,33,32,33],"club":[0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,1,0,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1]},"football":{"n":115,"e":[0,1,0,4,0,9,0,16,0,23,0,33,0,35,0,41,0,65,0,90,0,93,0,104,1,25,1,27,1,33,1,37,1,45,1,57,1,89,1,101,1,103,1,105,1,109,2,3,2,6,2,13,2,14,2,15,2,47,2,60,2,64,2,72,2,74,2,100,2,106,3,5,3,11,3,26,3,40,3,52,3,58,3,72,3,74,3,81,3,84,3,102,4,5,4,9,4,16,4,23,4,28,4,41,4,69,4,93,4,104,4,108,5,10,5,11,5,52,5,74,5,81,5,84,5,90,5,97,5,98,5,107,6,7,6,32,6,39,6,47,6,55,6,58,6,60,6,64,6,85,6,100,6,106,7,8,7,21,7,22,7,40,7,68,7,73,7,77,7,78,7,82,7,108,7,111,8,9,8,21,8,22,8,41,8,51,8,68,8,77,8,78,8,90,8,111,9,16,9,22,9,23,9,41,9,64,9,93,9,104,9,108,10,11,10,60,10,72,10,74,10,81,10,84,10,98,10,102,10,107,11,24,11,28,11,50,11,69,11,90,11,97,11,104,12,13,12,14,12,17,12,18,12,26,12,34,12,36,12,38,12,43,12,85,13,15,13,32,13,39,13,45,13,60,13,64,13,100,13,106,13,110,14,15,14,26,14,38,14,43,14,54,14,71,14,85,14,99,15,32,15,39,15,47,15,60,15,68,15,92,15,100,15,106,15,114,16,17,16,23,16,38,16,41,16,67,16,81,16,93,16,104,17,20,17,27,17,58,17,62,17,65,17,87,17,95,17,96,17,113,18,19,18,31,18,34,18,36,18,38,18,42,18,54,18,61,18,71,18,99,19,29,19,30,19,33,19,35,19,36,19,44,19,55,19,79,19,94,19,101,20,21,20,36,20,62,20,65,20,70,20,75,20,76,20,87,20,96,20,113,21,22,21,32,21,46,21,51,21,68,21,77,21,108,21,111,22,23,22,47,22,51,22,68,22,77,22,78,22,108,23,41,23,78,23,90,23,93,23,104,23,111,24,25,24,28,24,50,24,66,24,69,24,84,24,87,24,90,24,110,25,33,25,37,25,45,25,53,25,89,25,103,25,105,25,106,25,109,26,27,26,34,26,38,26,42,26,43,26,61,26,85,27,56,27,62,27,63,27,65,27,70,27,76,27,95,27,96,28,38,28,50,28,69,28,78,28,90,28,113,29,30,29,35,29,42,29,55,29,79,29,80,29,82,29,91,29,94,29,101,30,35,30,44,30,50,30,55,30,79,30,82,30,94,30,101,30,109,31,32,31,34,31,43,31,54,31,55,31,61,31,71,31,79,31,85,31,99,32,39,32,47,32,49,32,64,32,100,32,106,33,37,33,45,33,89,33,103,33,105,33,109,34,35,34,42,34,54,34,61,34,71,34,94,34,99,35,44,35,55,35,79,35,92,35,94,35,101,36,37,36,43,36,58,36,59,37,45,37,80,37,89,37,95,37,103,37,105,37,109,38,39,38,43,38,54,38,71,38,85,39,47,39,54,39,60,39,82,39,100,39,106,40,41,40,51,40,52,40,72,40,74,40,81,40,98,40,102,40,107,41,67,41,93,41,104,42,43,42,57,42,63,43,61,43,70,43,79,43,85,44,45,44,48,44,57,44,66,44,75,44,86,44,91,44,112,45,62,45,89,45,103,45,105,45,109,46,47,46,49,46,53,46,67,46,73,46,83,46,88,46,110,46,111,46,114,47,60,47,61,47,64,47,100,48,49,48,53,48,57,48,66,48,75,48,86,48,91,48,92,48,96,48,98,49,53,49,67,49,73,49,83,49,84,49,88,49,110,49,114,50,51,50,68,50,69,50,78,50,90,51,68,51,77,51,78,51,101,51,108,51,111,52,53,52,72,52,74,52,84,52,98,52,102,52,112,53,67,53,73,53,83,53,86,53,88,53,110,53,114,54,55,54,61,54,71,54,99,55,79,55,89,55,94,55,101,56,57,56,62,56,65,56,70,56,76,56,87,56,95,56,96,56,106,57,75,57,86,57,91,57,92,57,112,58,59,58,63,58,88,58,97,58,101,58,114,59,60,59,63,59,66,59,76,59,97,59,113,60,64,60,71,60,106,61,62,61,71,61,92,61,99,62,70,62,76,62,87,62,95,62,105,63,64,63,65,63,97,63,109,63,112,64,100,64,106,64,111,65,66,65,70,65,87,65,96,65,113,66,75,66,76,66,86,66,91,66,92,66,112,67,68,67,73,67,83,67,88,67,104,67,110,67,114,68,78,68,108,68,111,69,70,69,83,69,88,69,90,69,91,69,95,70,76,70,95,70,103,70,113,71,72,71,99,72,74,72,81,72,102,72,104,72,107,73,74,73,77,73,83,73,88,73,110,73,114,74,82,74,84,74,102,75,76,75,86,75,92,75,107,75,112,76,95,76,96,76,113,77,78,77,82,77,98,77,108,77,111,78,108,78,111,79,80,79,94,79,101,79,109,80,82,80,85,80,86,80,91,80,93,80,94,80,105,80,110,81,82,81,83,81,84,81,98,81,107,82,93,82,94,82,100,83,84,83,88,83,110,83,114,84,98,84,107,85,99,86,87,86,91,86,92,86,97,87,95,87,96,87,104,87,113,88,89,88,107,88,110,88,114,89,99,89,103,89,105,89,109,91,92,91,93,91,112,92,106,92,112,93,104,94,101,95,113,96,112,96,113,97,98,97,112,98,102,98,107,99,100,100,102,102,103,102,107,103,105,103,109,104,114,105,109,108,111,110,114],"names":["BrighamYoung","FloridaState","Iowa","KansasState","NewMexico","TexasTech","PennState","SouthernCalifornia","ArizonaState","SanDiegoState","Baylor","NorthTexas","NorthernIllinois","Northwestern","WesternMichigan","Wisconsin","Wyoming","Auburn","Akron","VirginiaTech","Alabama","UCLA","Arizona","Utah","ArkansasState","NorthCarolinaState","BallState","Florida","BoiseState","BostonCollege","WestVirginia","BowlingGreenState","Michigan","Virginia","Buffalo","Syracuse","CentralFlorida","GeorgiaTech","CentralMichigan","Purdue","Colorado","ColoradoState","Connecticut","EasternMichigan","EastCarolina","Duke","FresnoState","OhioState","Houston","Rice","Idaho","Washington","Kansas","SouthernMethodist","Kent","Pittsburgh","Kentucky","Louisville","LouisianaTech","LouisianaMonroe","Minnesota","MiamiOhio","Vanderbilt","MiddleTennesseeState","Illinois","MississippiState","Memphis","Nevada","Oregon","NewMexicoState","SouthCarolina","Ohio","IowaState","SanJoseState","Nebraska","SouthernMississippi","Tennessee","Stanford","WashingtonState","Temple","Navy","TexasA&M","NotreDame","TexasElPaso","Oklahoma","Toledo","Tulane","Mississippi","Tulsa","NorthCarolina","UtahState","Army","Cincinnati","AirForce","Rutgers","Georgia","LouisianaState","LouisianaLafayette","Texas","Marshall","MichiganState","MiamiFlorida","Missouri","Clemson","NevadaLasVegas","WakeForest","Indiana","OklahomaState","OregonState","Maryland","TexasChristian","California","AlabamaBirmingham","Arkansas","Hawaii"],"conf":[7,0,2,3,7,3,2,8,8,7,3,10,6,2,6,2,7,9,6,1,9,8,8,7,10,0,6,9,11,1,1,6,2,0,6,1,5,0,6,2,3,7,5,6,4,0,11,2,4,11,10,8,3,11,6,1,9,4,11,10,2,6,9,10,2,9,4,11,8,10,9,6,3,11,3,4,9,8,8,1,5,3,5,11,3,6,4,9,11,0,5,4,4,7,1,9,9,10,3,6,2,1,3,0,7,0,2,3,8,0,4,8,4,9,11]}};
+const CONF = ["Atlantic Coast","Big East","Big Ten","Big Twelve","Conference USA","Independents","Mid-American","Mountain West","Pacific Ten","Southeastern","Sun Belt","Western Athletic"];
+const tip = $("tip");
+const radioVal = name => document.querySelector(`input[name="${name}"]:checked`).value;
+const f2 = v => (Math.abs(v - Math.round(v)) < 1e-9 ? String(Math.round(v)) : v.toFixed(2));
+
+/* ---------- exact fractions ---------- */
+const gcd = (a, b) => b ? gcd(b, a % b) : Math.abs(a);
+class Q{
+  constructor(n, d = 1){ if (d < 0){ n = -n; d = -d; } const g = gcd(n, d) || 1; this.n = n / g; this.d = d / g; }
+  add(o){ return new Q(this.n * o.d + o.n * this.d, this.d * o.d); }
+  div(k){ return new Q(this.n, this.d * k); }
+  get v(){ return this.n / this.d; }
+  str(){ return this.d === 1 ? String(this.n) : `${this.n}/${this.d}`; }
+  show(){ return this.d === 1 ? String(this.n) : `${this.n}/${this.d} ≈ ${this.v.toFixed(2)}`; }
+}
+
+/* ---------- friendship-paradox statistics ---------- */
+function fpStats(g){
+  const N = g.N, k = g.deg, knn = new Float64Array(N), h = new Float64Array(N);
+  let s1 = 0, s2 = 0, s3 = 0, sm1 = 0, sknn = 0, skknn = 0, pg = 0, pl = 0;
+  for (let i = 0; i < N; i++){
+    let s = 0, lower = 0;
+    for (let p = g.off[i]; p < g.off[i + 1]; p++){ const kj = k[g.nbr[p]]; s += kj; if (kj < k[i]) lower++; }
+    knn[i] = k[i] ? s / k[i] : 0; h[i] = k[i] ? lower / k[i] : 0;
+    s1 += k[i]; s2 += k[i] * k[i]; s3 += k[i] ** 3; sm1 += k[i] ? 1 / k[i] : 0;
+    sknn += knn[i]; skknn += k[i] * knn[i];
+    if (k[i] < knn[i]) pg++; if (h[i] < 0.5) pl++;
+  }
+  const km = s1 / N, kf = s2 / s1, kn = sknn / N, cov = skknn / N - km * kn;
+  // Newman's r over edges, and the inversity over oriented edges
+  let sjk = 0, sjpk = 0, sj2k2 = 0, ox = 0, oy = 0, oxx = 0, oyy = 0, oxy = 0;
+  const E = g.edges, M = E.length / 2;
+  for (let e = 0; e < E.length; e += 2){
+    const a = k[E[e]], b = k[E[e + 1]];
+    sjk += a * b; sjpk += (a + b) / 2; sj2k2 += (a * a + b * b) / 2;
+    for (const [o, d] of [[a, b], [b, a]]){ const x = d, y = 1 / o; ox += x; oy += y; oxx += x * x; oyy += y * y; oxy += x * y; }
+  }
+  const mr = sjpk / M, r = (sjk / M - mr * mr) / (sj2k2 / M - mr * mr);
+  const n2 = 2 * M, cx = oxy / n2 - (ox / n2) * (oy / n2), vx = oxx / n2 - (ox / n2) ** 2, vy = oyy / n2 - (oy / n2) ** 2;
+  const rho = cx / Math.sqrt(vx * vy);
+  const K1 = km, K2 = s2 / N, K3 = s3 / N, Km1 = sm1 / N;
+  const moment = rho * Math.sqrt(Math.max(0, (K1 * K3 - K2 * K2) * (Km1 - 1 / K1) / K1));
+  return { N, M, k, knn, h, km, kf, kn, cov, covk: cov / km, r, rho, moment, phiG: pg / N, phiL: pl / N, var: K2 - km * km };
+}
+function fromData(name){ const d = DATA[name]; return build(d.n, d.e); }
+
+/* ---------- generic force-layout canvas ---------- */
+class ForceView{
+  constructor(cv, o){ this.cv = cv; this.o = o; this.hover = -1; this.raf = 0;
+    const pick = e => {
+      const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+      let best = -1, bd = 196;
+      if (this.sx) for (let i = 0; i < this.g.N; i++){ const dx = this.sx[i] - mx, dy = this.sy[i] - my, d = dx * dx + dy * dy; if (d < bd){ bd = d; best = i; } }
+      this.setHover(best, e);
+    };
+    cv.addEventListener("pointermove", pick); cv.addEventListener("pointerdown", pick);
+    cv.addEventListener("pointerleave", () => this.setHover(-1));
+  }
+  setHover(i, e){
+    if (i !== this.hover){ this.hover = i; this.draw(); if (this.o.onHover) this.o.onHover(i); }
+    if (i >= 0 && e){ tip.innerHTML = this.o.tip(i); tip.style.left = Math.min(e.clientX + 12, innerWidth - 280) + "px"; tip.style.top = (e.clientY - 34) + "px"; tip.style.opacity = 1; }
+    else tip.style.opacity = 0;
+  }
+  set(g){
+    cancelAnimationFrame(this.raf); this.g = g; this.hover = -1;
+    const N = g.N; this.x = new Float32Array(N); this.y = new Float32Array(N); this.vx = new Float32Array(N); this.vy = new Float32Array(N);
+    for (let i = 0; i < N; i++){ const a = Math.random() * 6.283, r = 60 * Math.sqrt(Math.random()); this.x[i] = r * Math.cos(a); this.y[i] = r * Math.sin(a); }
+    this.alpha = 1;
+    if (reduceMotion){ while (this.alpha > 0.02) this.tick(); this.draw(); } else this.loop();
+  }
+  loop(){ for (let i = 0; i < 2; i++) this.tick(); this.draw(); if (this.alpha > 0.02) this.raf = requestAnimationFrame(() => this.loop()); }
+  tick(){ forceTick(this.g, this, this.o.L || 22); this.alpha *= 0.985; }
+  draw(){
+    const g = this.g; if (!g || !this.x) return;
+    const { ctx, w, h } = setup(this.cv), N = g.N, { x, y } = this;
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (let i = 0; i < N; i++){ x0 = Math.min(x0, x[i]); x1 = Math.max(x1, x[i]); y0 = Math.min(y0, y[i]); y1 = Math.max(y1, y[i]); }
+    const m = 28, sc = Math.min((w - 2 * m) / (x1 - x0 || 1), (h - 2 * m) / (y1 - y0 || 1), N < 10 ? 9 : 99);
+    const ox = (w - (x1 - x0) * sc) / 2, oy = (h - (y1 - y0) * sc) / 2;
+    if (!this.sx || this.sx.length !== N){ this.sx = new Float32Array(N); this.sy = new Float32Array(N); }
+    for (let i = 0; i < N; i++){ this.sx[i] = ox + (x[i] - x0) * sc; this.sy[i] = oy + (y[i] - y0) * sc; }
+    const sx = this.sx, sy = this.sy, E = g.edges, f = this.hover;
+    ctx.lineWidth = N < 10 ? 2.5 : 1; ctx.strokeStyle = N < 10 ? C.muted : C.edge; ctx.beginPath();
+    for (let e = 0; e < E.length; e += 2){ ctx.moveTo(sx[E[e]], sy[E[e]]); ctx.lineTo(sx[E[e + 1]], sy[E[e + 1]]); }
+    ctx.stroke();
+    const nb = new Set();
+    if (f >= 0){ ctx.strokeStyle = C.ink; ctx.lineWidth = 1.6; ctx.beginPath();
+      for (let p = g.off[f]; p < g.off[f + 1]; p++){ const u = g.nbr[p]; nb.add(u); ctx.moveTo(sx[f], sy[f]); ctx.lineTo(sx[u], sy[u]); } ctx.stroke(); }
+    const base = Math.max(0.8, Math.min(1.4, w / 420)) * (N < 10 ? 2.4 : 1);
+    for (let i = 0; i < N; i++){
+      const r = (2.4 + 1.5 * Math.sqrt(g.deg[i])) * base;
+      ctx.globalAlpha = f >= 0 && i !== f && !nb.has(i) ? 0.25 : 1;
+      ctx.beginPath(); ctx.arc(sx[i], sy[i], r, 0, 7); ctx.fillStyle = C[this.o.color(i)] || this.o.color(i); ctx.fill();
+      ctx.globalAlpha = 1;
+      if (i === f){ ctx.lineWidth = 2.2; ctx.strokeStyle = C.ink; ctx.stroke(); }
+    }
+    if (this.o.labels){ ctx.font = "600 14px " + bodyFont(); ctx.fillStyle = C.sheet; ctx.textAlign = "center"; ctx.textBaseline = "middle"; for (let i = 0; i < N; i++) ctx.fillText(this.o.labels(i), sx[i], sy[i] + 1); }
+  }
+}
+
+/* ---------- hero ---------- */
+const HERO = {
+  star: { emoji: true, names: ["🥹", "😏", "🤔", "😎"], pos: [[240,58],[120,292],[360,292],[240,178]], lab: ["r","b","b","r"], edges: [[0,3],[3,1],[3,2]] },
+  seven: { emoji: false, names: ["Mary","Nancy","Tara","Tom","John","Bob","Pam"], pos: [[60,80],[185,52],[430,92],[245,185],[85,228],[395,222],[225,315]],
+    lab: ["b","r","b",[30,-34,"start"],"b","b","r"], edges: [[0,1],[1,3],[1,5],[3,4],[3,6],[3,5],[4,6],[5,2]] }
+};
+let heroSel = -1;
+function heroGraph(){ const H = HERO[radioVal("heroNet")]; const f = []; H.edges.forEach(([a, b]) => f.push(a, b)); return { H, g: build(H.names.length, f) }; }
+function drawHero(){
+  const { H, g } = heroGraph(), N = g.N, k = g.deg, svg = $("heroSvg");
+  const knnQ = Array.from({ length: N }, (_, i) => { let s = 0; for (let p = g.off[i]; p < g.off[i + 1]; p++) s += k[g.nbr[p]]; return new Q(s, k[i]); });
+  const nbSel = new Set(); if (heroSel >= 0) for (let p = g.off[heroSel]; p < g.off[heroSel + 1]; p++) nbSel.add(g.nbr[p]);
+  svg.textContent = "";
+  H.edges.forEach(([a, b]) => { const on = heroSel >= 0 && (a === heroSel || b === heroSel);
+    svgEl("line", { x1: H.pos[a][0], y1: H.pos[a][1], x2: H.pos[b][0], y2: H.pos[b][1], style: `stroke:${on ? "var(--hub)" : "var(--ink)"};stroke-width:${on ? 4.5 : 3};stroke-linecap:round;stroke-opacity:${heroSel >= 0 && !on ? .25 : .8}` }, svg); });
+  for (let i = 0; i < N; i++){
+    const [x, y] = H.pos[i], R = 27, dim = heroSel >= 0 && i !== heroSel && !nbSel.has(i);
+    const ng = svgEl("g", { "data-n": i, tabindex: 0, role: "button", "aria-label": `${H.emoji ? "Person " + (i + 1) : H.names[i]}: ${k[i]} friends, friends average ${knnQ[i].v.toFixed(2)}`, style: `opacity:${dim ? .35 : 1}` }, svg);
+    svgEl("circle", { cx: x, cy: y, r: R + 6, style: "fill:transparent" }, ng);
+    svgEl("circle", { class: "body", cx: x, cy: y, r: R, style: `fill:var(--sheet);stroke:${i === heroSel ? "var(--hub)" : k[i] < knnQ[i].v ? "var(--muted)" : "var(--ink)"};stroke-width:${i === heroSel ? 4 : 2.5}` }, ng);
+    const t = svgEl("text", { x, y: y + (H.emoji ? 2 : 1), "text-anchor": "middle", "dominant-baseline": "middle", style: `font:${H.emoji ? "28px system-ui, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif" : "600 13px var(--body)"};fill:var(--ink);pointer-events:none` }, ng);
+    t.textContent = H.names[i];
+    const L = H.lab[i]; let dx = 0, dy = R + 18, anchor = "middle";
+    if (L === "r"){ dx = R + 10; dy = -4; anchor = "start"; } else if (L === "l"){ dx = -R - 10; dy = -4; anchor = "end"; } else if (Array.isArray(L)){ [dx, dy, anchor] = L; }
+    const lt = svgEl("text", { x: x + dx, y: y + dy, "text-anchor": anchor, style: "font:600 14px var(--body);fill:var(--ink);pointer-events:none;paint-order:stroke;stroke:var(--sheet);stroke-width:4px" }, ng);
+    lt.innerHTML = `<tspan style="font:italic 17px 'Times New Roman', Times, serif">k</tspan> = ${k[i]}`;
+    const lt2 = svgEl("text", { x: x + dx, y: y + dy + 18, "text-anchor": anchor, style: "font:600 14px var(--body);fill:var(--er);pointer-events:none;paint-order:stroke;stroke:var(--sheet);stroke-width:4px" }, ng);
+    lt2.innerHTML = `<tspan style="font:italic 17px 'Times New Roman', Times, serif">k</tspan><tspan baseline-shift="sub" font-size="10">nn</tspan> = ${knnQ[i].str()}`;
+  }
+  // arithmetic, in the style of the slides
+  const degs = Array.from(k), sumK = degs.reduce((a, b) => a + b, 0);
+  const kQ = new Q(sumK, N);
+  const ends = []; for (let i = 0; i < N; i++) for (let p = g.off[i]; p < g.off[i + 1]; p++) ends.push(k[g.nbr[p]]);
+  const kfQ = new Q(ends.reduce((a, b) => a + b, 0), ends.length);
+  let knSum = new Q(0); knnQ.forEach(q => knSum = knSum.add(q)); const knQ = knSum.div(N);
+  const qT = q => q.d === 1 ? String(q.n) : `${q.n}/${q.d} \\approx ${q.v.toFixed(2)}`, qS = q => q.d === 1 ? String(q.n) : `${q.n}/${q.d}`;
+  setMath($("eqK"), `\\(\\langle k\\rangle = (${degs.join(" + ")})\\,/\\,${N} = \\htmlClass{res k}{${qT(kQ)}}\\)`);
+  setMath($("eqKF"), `\\(\\langle k_\\text{friend}\\rangle = (${ends.join(" + ")})\\,/\\,${ends.length} = \\htmlClass{res kf}{${qT(kfQ)}}\\)`);
+  setMath($("eqKN"), `\\(\\langle k_\\text{nn}\\rangle = (${knnQ.map(qS).join(" + ")})\\,/\\,${N} = \\htmlClass{res kn}{${qT(knQ)}}\\)`);
+  const below = degs.filter((d, i) => d < knnQ[i].v).length;
+  $("heroText").innerHTML = `${below} of ${N} people have fewer friends than their friends do on average. Both friend averages, <span style="color:var(--sf)">${kfQ.v.toFixed(2)}</span> and <span style="color:var(--er)">${knQ.v.toFixed(2)}</span>, beat the plain average of <span class="num">${kQ.v.toFixed(2)}</span>.`;
+  if (heroSel < 0) $("heroPick").textContent = "Pick a person to see their friends.";
+  else { const who = H.emoji ? H.names[heroSel] : H.names[heroSel], fr = [...nbSel];
+    $("heroPick").innerHTML = `${who} has ${k[heroSel]} friend${k[heroSel] > 1 ? "s" : ""}, who have ${fr.map(j => k[j]).join(", ")} friends: ${knnQ[heroSel].show()} on average.`; }
+}
+$("heroSvg").addEventListener("click", e => { const n = e.target.closest("[data-n]"); if (n){ heroSel = heroSel === +n.dataset.n ? -1 : +n.dataset.n; drawHero(); } });
+$("heroSvg").addEventListener("keydown", e => { const n = e.target.closest("[data-n]"); if (n && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); heroSel = heroSel === +n.dataset.n ? -1 : +n.dataset.n; drawHero(); const el = $("heroSvg").querySelector(`[data-n="${n.dataset.n}"]`); if (el) el.focus(); } });
+document.querySelectorAll('input[name="heroNet"]').forEach(r => r.addEventListener("change", () => { heroSel = -1; drawHero(); }));
+
+/* ---------- sampling ---------- */
+const nets = {};
+function getNet(name){
+  if (!nets[name]) nets[name] = name === "sf" ? genBA(10000, 2) : name === "er" ? largestComponent(genER(10000, 4)) : fromData(name);
+  return nets[name];
+}
+let S = null;
+function sReset(){
+  const g = getNet($("sNet").value), st = fpStats(g);
+  S = { g, st, people: [], ends: [], fof: [], runs: { people: [], ends: [], fof: [] }, sums: { people: 0, ends: 0, fof: 0 }, n: 0 };
+  sMore();
+}
+function sMore(){
+  const { g } = S, N = g.N, L = g.nbr.length;
+  for (let t = 0; t < 1000; t++){
+    const a = g.deg[rnd(N)], b = g.deg[g.nbr[rnd(L)]];
+    const i = rnd(N), c = g.deg[g.nbr[g.off[i] + rnd(g.deg[i])]];
+    S.people.push(a); S.ends.push(b); S.fof.push(c);
+    S.sums.people += a; S.sums.ends += b; S.sums.fof += c; S.n++;
+    if (S.n < 50 || S.n % Math.max(1, Math.round(S.n / 60)) === 0) for (const key of ["people", "ends", "fof"]) S.runs[key].push([S.n, S.sums[key] / S.n]);
+  }
+  for (const key of ["people", "ends", "fof"]) S.runs[key].push([S.n, S.sums[key] / S.n]);
+  drawS();
+}
+function drawS(){
+  if (!S) return;
+  const { g, st } = S, kmax = Math.max(...g.deg), N = g.N;
+  const hist = arr => { const h = new Map(); arr.forEach(v => h.set(v, (h.get(v) || 0) + 1)); return [...h.entries()].map(([k, c]) => [k, c / arr.length]); };
+  const pk = new Map(); g.deg.forEach(k => pk.set(k, (pk.get(k) || 0) + 1));
+  const ks = [...pk.keys()].sort((a, b) => a - b);
+  const logx = kmax > 30;
+  // log-binned densities keep the sparse tail readable; small networks use plain counts
+  const bins = []; if (logx){ let lo = 1; while (lo <= kmax){ const hi = Math.max(lo + 1, Math.ceil(lo * 1.4)); bins.push([lo, hi]); lo = hi; } }
+  const binned = (pairs) => { if (!logx) return pairs; const acc = new Float64Array(bins.length);
+    pairs.forEach(([k, w]) => { for (let b = 0; b < bins.length; b++) if (k >= bins[b][0] && k < bins[b][1]){ acc[b] += w; break; } });
+    const out = []; bins.forEach(([lo, hi], b) => { if (acc[b] > 0) out.push([Math.sqrt(lo * (hi - 1)) || lo, acc[b] / (hi - lo)]); }); return out; };
+  const pLine = binned(ks.map(k => [k, pk.get(k) / N])), qLine = binned(ks.map(k => [k, k * pk.get(k) / N / st.km]));
+  const allY = [...pLine, ...qLine].map(p => p[1]);
+  plot($("sDist"), {
+    x: logx ? { log: true, min: 1, max: Math.pow(10, Math.ceil(Math.log10(kmax * 1.05))), label: "number of friends *k*" } : { min: 0, max: kmax + 1, label: "number of friends *k*" },
+    y: { log: true, min: Math.pow(10, Math.floor(Math.log10(Math.min(...allY, 1 / S.n)))), max: 1, label: logx ? "probability density (log-binned)" : "probability" },
+    series: [
+      { type: "line", pts: pLine, color: "node", width: 1.6 }, { type: "line", pts: qLine, color: "sf", width: 1.6 },
+      { type: "dots", pts: binned(hist(S.people)), color: "node", r: 3.4, alpha: .85 }, { type: "dots", pts: binned(hist(S.ends)), color: "sf", r: 3.4, shape: "diamond", alpha: .85 }
+    ]
+  });
+  const ys = [st.km, st.kf, st.kn, ...S.runs.ends.slice(5).map(p => p[1]), ...S.runs.fof.slice(5).map(p => p[1])];
+  const ymax = Math.max(...ys) * 1.25;
+  plot($("sMean"), {
+    x: { log: true, min: 1, max: Math.pow(10, Math.ceil(Math.log10(S.n))), label: "number of people surveyed" },
+    y: { min: 0, max: ymax, label: "average number of friends" },
+    series: [
+      { type: "line", pts: [[1, st.km], [1e9, st.km]], color: "node", dash: true, width: 1.3 },
+      { type: "line", pts: [[1, st.kf], [1e9, st.kf]], color: "sf", dash: true, width: 1.3 },
+      { type: "line", pts: [[1, st.kn], [1e9, st.kn]], color: "er", dash: true, width: 1.3 },
+      { type: "line", pts: S.runs.people, color: "node" }, { type: "line", pts: S.runs.ends, color: "sf" }, { type: "line", pts: S.runs.fof, color: "er" }
+    ]
+  });
+  $("sStatus").textContent = `${S.n.toLocaleString("en-US")} surveyed`;
+  $("sText").innerHTML = `Exact values: \\(\\langle k\\rangle\\) = ${st.km.toFixed(2)}, \\(\\langle k_\\text{friend}\\rangle = \\langle k^2\\rangle/\\langle k\\rangle\\) = <span style="color:var(--sf);font-weight:700">${st.kf.toFixed(2)}</span>, \\(\\langle k_\\text{nn}\\rangle\\) = ${st.kn.toFixed(2)}. The gap \\(\\sigma_k^2/\\langle k\\rangle\\) = ${(st.var / st.km).toFixed(2)}${st.kf / st.km > 1.8 ? ": a friend has about " + (st.kf / st.km).toFixed(1) + " times as many friends as a typical person." : "."}`;
+}
+$("sNet").addEventListener("change", sReset);
+$("sMore").addEventListener("click", sMore);
+$("sReset").addEventListener("click", sReset);
+
+/* ---------- Feld's four arrangements ---------- */
+const L16 = "ABCDEFGHIJKLMNOP".split("");
+const id = c => L16.indexOf(c);
+const pairs = s => s.split(" ").map(p => [id(p[0]), id(p[1])]);
+const FELD = [
+  { e: pairs("AB AC AD BC BD CD EF GH IJ KL MN OP"), p: { A:[90,45], B:[160,125], C:[90,205], D:[20,125], E:[290,30], F:[400,30], G:[290,72], H:[400,72], I:[290,114], J:[400,114], K:[290,156], L:[400,156], M:[290,198], N:[400,198], O:[290,240], P:[400,240] } },
+  { e: pairs("IA AB BJ AD BC DH DG CE CF KL MN OP"), p: { I:[25,30], A:[110,55], B:[215,85], J:[300,65], D:[85,140], C:[200,165], H:[30,190], G:[60,250], E:[160,245], F:[250,245], K:[390,100], L:[480,100], M:[390,160], N:[480,160], O:[390,220], P:[480,220] } },
+  { e: pairs("AI AJ AD DH DG BK BL BC CE CF MN OP"), p: { I:[25,30], A:[110,55], J:[185,30], D:[85,140], H:[30,195], G:[70,255], B:[300,70], K:[370,35], L:[370,110], C:[255,160], E:[205,245], F:[305,245], M:[410,190], N:[490,190], O:[410,245], P:[490,245] } },
+  { e: pairs("AE AF AG BH BI BJ DK DL DM CN CO CP"), p: { A:[100,40], E:[40,120], F:[100,120], G:[160,120], B:[380,40], H:[320,120], I:[380,120], J:[440,120], D:[100,160], K:[40,240], L:[100,240], M:[160,240], C:[380,160], N:[320,240], O:[380,240], P:[440,240] } }
+];
+let feldSel = -1, feldView = null;
+function drawFeld(){
+  const a = FELD[+radioVal("feld")], pos = L16.map(c => a.p[c]);
+  const svg = $("feldSvg"), fresh = svg.cloneNode(false); svg.replaceWith(fresh);
+  feldView = makeSmall(fresh, pos, a.e, i => { feldSel = feldSel === i ? -1 : i; renderFeld(); });
+  renderFeld();
+}
+function renderFeld(){
+  const g = feldView.g, st = fpStats(g), k = g.deg;
+  feldView.render({ r: () => 15, fill: i => ["var(--node)", k[i] === 3 ? 1 : .25], inner: i => [L16[i], k[i] === 3 ? "#fff" : "var(--ink)"],
+    stroke: i => i === feldSel ? "var(--ink)" : k[i] < st.knn[i] ? "var(--hub)" : "var(--node)", strokeW: i => i === feldSel ? 4 : k[i] < st.knn[i] ? 3 : 1.5,
+    edgeColor: () => "var(--ink)", edgeOpacity: () => .75, aria: i => `${L16[i]}: ${k[i]} friends, friends average ${st.knn[i].toFixed(2)}` });
+  const differ = Array.from(k).filter((d, i) => Math.abs(d - st.knn[i]) > 1e-9).length, below = Math.round(st.phiG * 16);
+  $("feldStat").innerHTML = `<div>Average number of friends \\(\\langle k\\rangle\\)</div><div>${f2(st.km)}</div>
+    <div style="color:var(--sf)">Alter-based \\(\\langle k_\\text{friend}\\rangle\\)</div><div style="color:var(--sf)">${f2(st.kf)}</div>
+    <div style="color:var(--er)">Ego-based \\(\\langle k_\\text{nn}\\rangle\\)</div><div style="color:var(--er)">${f2(st.kn)}</div>
+    <div class="sep"></div>
+    <div>\\(\\mathrm{Cov}_\\text{n}(k, k_\\text{nn})/\\langle k\\rangle\\)</div><div>${f2(st.covk)}</div>
+    <div>Degree assortativity \\(r\\)</div><div>${isFinite(st.r) ? f2(st.r) : "undefined"}</div>
+    <div>People with fewer friends than their friends’ average</div><div>${below} of 16</div>
+    <div>Share among those who differ from their friends</div><div>${differ ? Math.round(100 * below / differ) + "%" : "none differ"}</div>`;
+  $("feldPick").innerHTML = feldSel < 0 ? "The last row is the share Feld reported: 60%, 67% and 75% for (b), (c) and (d). Pick a person for details." :
+    `${L16[feldSel]} has ${k[feldSel]} friend${k[feldSel] > 1 ? "s" : ""}; their friends have ${f2(st.knn[feldSel])} on average.`;
+}
+document.querySelectorAll('input[name="feld"]').forEach(r => r.addEventListener("change", () => { feldSel = -1; drawFeld(); }));
+
+/* ---------- rewiring ---------- */
+let R = null, rBusy = 0;
+function rReset(){
+  const g = genBA(1000, 2);
+  R = { N: g.N, e: Array.from(g.edges), deg: g.deg, set: new Set(), traj: [] };
+  for (let i = 0; i < R.e.length; i += 2) R.set.add(rKey(R.e[i], R.e[i + 1]));
+  rRecord(); drawR();
+}
+const rKey = (a, b) => a < b ? a * R.N + b : b * R.N + a;
+function rSwaps(mode, n){
+  const M = R.e.length / 2, d = R.deg;
+  for (let t = 0; t < n; t++){
+    const e1 = rnd(M), e2 = rnd(M); if (e1 === e2) continue;
+    const v = [R.e[2 * e1], R.e[2 * e1 + 1], R.e[2 * e2], R.e[2 * e2 + 1]];
+    if (new Set(v).size < 4) continue;
+    v.sort((a, b) => d[b] - d[a] || Math.random() - .5);
+    const [p, q] = mode === "ass" ? [[v[0], v[1]], [v[2], v[3]]] : [[v[0], v[3]], [v[1], v[2]]];
+    const kp = rKey(p[0], p[1]), kq = rKey(q[0], q[1]);
+    const old1 = rKey(R.e[2 * e1], R.e[2 * e1 + 1]), old2 = rKey(R.e[2 * e2], R.e[2 * e2 + 1]);
+    if ((kp === old1 || kp === old2) || R.set.has(kp) || R.set.has(kq)) continue;
+    R.set.delete(old1); R.set.delete(old2); R.set.add(kp); R.set.add(kq);
+    R.e[2 * e1] = p[0]; R.e[2 * e1 + 1] = p[1]; R.e[2 * e2] = q[0]; R.e[2 * e2 + 1] = q[1];
+  }
+}
+function rRecord(){ R.traj.push(fpStats(build(R.N, R.e))); }
+async function rRun(mode){
+  const tok = ++rBusy;
+  for (let b = 0; b < 25; b++){
+    rSwaps(mode, 160); rRecord(); drawR();
+    $("rStatus").textContent = "Rewiring…";
+    await pause(); if (tok !== rBusy) return;
+  }
+  $("rStatus").textContent = `${R.traj.length - 1} rounds of swaps so far`;
+}
+function drawR(){
+  if (!R) return;
+  const T = R.traj, last = T[T.length - 1];
+  const rs = T.map(s => s.r), lo = Math.min(-0.3, ...rs) - .05, hi = Math.max(0.3, ...rs) + .05;
+  const ymax = Math.max(...T.map(s => Math.max(s.kn, s.kf))) * 1.15;
+  const path = T.map(s => [s.r, s.kn]);
+  plot($("rCv"), {
+    x: { min: lo, max: hi, label: "degree assortativity *r*", fmt: v => (+v.toFixed(2)).toString() },
+    y: { min: 0, max: ymax, label: "average number of friends" },
+    series: [
+      { type: "line", pts: [[lo, last.km], [hi, last.km]], color: "muted", dash: true, width: 1.4 },
+      { type: "line", pts: [[lo, last.kf], [hi, last.kf]], color: "sf", width: 2.4 },
+      { type: "line", pts: path, color: "er", width: 2 }, { type: "dots", pts: path, color: "er", r: 2.6 },
+      { type: "dots", pts: [[last.r, last.kn]], color: "hub", r: 6 }
+    ]
+  });
+  $("rText").innerHTML = `Now \\(r\\) = ${last.r.toFixed(3)}. The gap \\(\\langle k_\\text{friend}\\rangle - \\langle k_\\text{nn}\\rangle\\) = <span class="num">${(last.kf - last.kn).toFixed(4)}</span>; the covariance form gives ${last.covk.toFixed(4)}, and the inversity form, with \\(\\rho\\) = ${last.rho.toFixed(3)}, gives ${(-last.moment).toFixed(4)}. The alter-based mean never moves, because it depends only on the degrees.`;
+}
+$("rAss").addEventListener("click", () => rRun("ass"));
+$("rDis").addEventListener("click", () => rRun("dis"));
+$("rReset").addEventListener("click", () => { rBusy++; rReset(); $("rStatus").textContent = ""; });
+
+/* ---------- complete bipartite ---------- */
+function drawBip(){
+  const m = +$("bmIn").value, n = +$("bnIn").value;
+  $("bmOut").textContent = m; $("bnOut").textContent = n;
+  const H = Math.max(m, n), step = 340 / Math.max(1, H), pos = [], edges = [];
+  for (let i = 0; i < m; i++) pos.push([70, 20 + step * (i + .5) + (H - m) * step / 2]);
+  for (let j = 0; j < n; j++) pos.push([230, 20 + step * (j + .5) + (H - n) * step / 2]);
+  for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) edges.push([i, m + j]);
+  const svg = $("bipSvg"), fresh = svg.cloneNode(false); svg.replaceWith(fresh);
+  const v = makeSmall(fresh, pos, edges, () => {});
+  const r = Math.min(13, step * .38);
+  v.render({ r: () => r, fill: () => ["var(--hub)", .85], stroke: () => "var(--hub)", strokeW: () => 1.5, edgeColor: () => "var(--ink)", edgeOpacity: () => .45, edgeWidth: () => 1.2, aria: i => `Node in group ${i < m ? "m" : "n"}` });
+  const st = fpStats(v.g);
+  let k2 = 0, k3 = 0; v.g.deg.forEach(d => { k2 += d * d; k3 += d ** 3; });
+  $("bipStat").innerHTML = `<div>\\(\\langle k\\rangle = 2mn/(m+n)\\)</div><div>${f2(st.km)}</div>
+    <div style="color:var(--sf)">\\(\\langle k_\\text{friend}\\rangle = (m+n)/2\\)</div><div style="color:var(--sf)">${f2(st.kf)}</div>
+    <div style="color:var(--er)">\\(\\langle k_\\text{nn}\\rangle\\) measured</div><div style="color:var(--er)">${st.kn.toFixed(4)}</div>
+    <div>\\((m^2+n^2)/(m+n)\\)</div><div>${((m * m + n * n) / (m + n)).toFixed(4)}</div>
+    <div>\\(\\langle k^3\\rangle/\\langle k^2\\rangle\\)</div><div>${(k3 / k2).toFixed(4)}</div>
+    <div class="sep"></div>
+    <div>Degree assortativity \\(r\\)</div><div>${m === n ? "undefined (all degrees equal)" : st.r.toFixed(2)}</div>
+    <div>\\(\\mathrm{Cov}_\\text{n}(k, k_\\text{nn})/\\langle k\\rangle\\)</div><div>${f2(st.covk)}</div>`;
+}
+["bmIn", "bnIn"].forEach(i => $(i).addEventListener("input", drawBip));
+
+/* ---------- majority fractions ---------- */
+let MJ = null;
+const cat = (s, i) => { const mean = s.k[i] < s.knn[i], med = s.h[i] < .5; return mean && med ? "hub" : mean ? "path" : med ? "node" : "muted"; };
+const mView = new ForceView($("mNetCv"), {
+  color: i => cat(MJ.st, i),
+  tip: i => mTip(i),
+  labels: null, onHover: i => drawQuad(i)
+});
+function mTip(i){
+  const s = MJ.st, nm = MJ.name === "football" ? `${DATA.football.names[i]} (${CONF[DATA.football.conf[i]]})` : MJ.name === "toy" ? `node ${i + 1}` : MJ.name === "karate" ? `member ${i}` : `node ${i + 1}`;
+  return `${nm}: k = ${s.k[i]}, k<sub>nn</sub> = ${s.knn[i].toFixed(2)}, h = ${s.h[i].toFixed(2)}`;
+}
+function mLoad(){
+  const t = $("mNet").value;
+  let g;
+  if (t === "toy"){ const e = [0,1, 0,2, 1,2, 3,0, 3,1, 3,2, 4,0, 4,1, 4,2]; g = build(5, e); }
+  else if (t === "sf") g = genBA(300, 2); else if (t === "er") g = largestComponent(genER(300, 4)); else g = fromData(t);
+  MJ = { name: t, g, st: fpStats(g), jit: Array.from({ length: g.N }, () => [(Math.random() - .5), (Math.random() - .5)]) };
+  mView.o.labels = t === "toy" ? (i => String(i + 1)) : null;
+  $("mRegen").hidden = !(t === "sf" || t === "er");
+  mView.set(g); drawQuad(-1); mStats();
+}
+function drawQuad(hl){
+  if (!MJ) return;
+  const s = MJ.st, N = s.N, ys = Array.from(s.k, (k, i) => k - s.knn[i]);
+  const ylo = Math.min(-1, ...ys), yhi = Math.max(1, ...ys), pad = (yhi - ylo) * .08;
+  const jx = N < 10 ? .025 : .012, jy = (yhi - ylo) * (N < 10 ? .03 : .012);
+  const groups = { hub: [], path: [], node: [], muted: [] };
+  for (let i = 0; i < N; i++) groups[cat(s, i)].push([s.h[i] + MJ.jit[i][0] * jx, ys[i] + MJ.jit[i][1] * jy]);
+  const cnt = q => groups[q].length;
+  plot($("mQuad"), {
+    x: { min: -0.05, max: 1.05, label: "hub centrality *h*ᵢ", fmt: v => (+v.toFixed(1)).toString() },
+    y: { min: ylo - pad, max: yhi + pad, label: "*k*ᵢ − *k*ₙₙ(*i*)", fmt: v => (+v.toFixed(1)).toString() },
+    series: Object.keys(groups).map(c => ({ type: "dots", pts: groups[c], color: c, r: N < 10 ? 7 : 4, alpha: .75 })),
+    after: (ctx, X, Y, w, h, p) => {
+      ctx.strokeStyle = C.ink; ctx.setLineDash([5, 5]); ctx.lineWidth = 1.3; ctx.beginPath();
+      ctx.moveTo(X(.5), p.t); ctx.lineTo(X(.5), h - p.b); ctx.moveTo(p.l, Y(0)); ctx.lineTo(w - p.r, Y(0)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.font = "600 13px " + bodyFont(); ctx.textBaseline = "top";
+      const lab = (txt, col, x, y, al) => { ctx.textAlign = al; ctx.lineWidth = 4; ctx.strokeStyle = C.sheet; ctx.strokeText(txt, x, y); ctx.fillStyle = C[col]; ctx.fillText(txt, x, y); };
+      lab(`${cnt("hub")} both`, "hub", p.l + 6, Y(0) + 6, "left");
+      lab(`${cnt("path")} mean only`, "path", w - p.r - 6, Y(0) + 6, "right");
+      lab(`${cnt("node")} median only`, "node", p.l + 6, p.t + 4, "left");
+      lab(`${cnt("muted")} neither`, "muted", w - p.r - 6, p.t + 4, "right");
+      if (hl >= 0){ ctx.strokeStyle = C.ink; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(X(s.h[hl] + MJ.jit[hl][0] * jx), Y(ys[hl] + MJ.jit[hl][1] * jy), (N < 10 ? 7 : 4) + 4, 0, 7); ctx.stroke(); }
+    }
+  });
+}
+function mStats(){
+  const s = MJ.st;
+  $("mStat").innerHTML = `<div>Nodes \\(N\\)</div><div>${s.N}</div><div>\\(\\langle k\\rangle\\)</div><div>${s.km.toFixed(4)}</div>
+    <div style="color:var(--sf)">\\(\\langle k_\\text{friend}\\rangle\\)</div><div style="color:var(--sf)">${s.kf.toFixed(4)}</div>
+    <div style="color:var(--er)">\\(\\langle k_\\text{nn}\\rangle\\)</div><div style="color:var(--er)">${s.kn.toFixed(4)}</div>
+    <div>\\(\\mathrm{Cov}_\\text{n}(k, k_\\text{nn})/\\langle k\\rangle\\)</div><div>${s.covk.toFixed(4)}</div>
+    <div class="sep"></div>
+    <div>\\(\\phi_\\text{global}\\): share with \\(k_i < k_\\text{nn}(i)\\)</div><div>${s.phiG.toFixed(4)}</div>
+    <div>\\(\\phi_\\text{local}\\): share with \\(h_i < 1/2\\)</div><div>${s.phiL.toFixed(4)}</div>`;
+  const side = v => v > .5 ? "above" : v < .5 ? "below" : "exactly at";
+  const T = {
+    toy: "Both classical averages beat ⟨k⟩ = 3.6, yet only the two degree-3 nodes are dominated, in either sense: \\(\\phi_\\text{global} = \\phi_\\text{local} = 2/5\\). Nodes 1 to 3 sit exactly at \\(h = 1/2\\).",
+    karate: "Here the two views agree. Most members sit below the mean of their neighbors and are also outnumbered by better-connected neighbors, so both fractions are high.",
+    football: "The paradox holds on average, yet most teams have <i>more</i> games than their opponents’ mean, so \\(\\phi_\\text{global} < 1/2\\). At the same time most teams are outnumbered in the median sense, so \\(\\phi_\\text{local} \\approx 0.84\\). The opponents’ degrees are left-skewed: a few low-degree teams drag the mean below the median."
+  };
+  $("mText").innerHTML = T[MJ.name] || `\\(\\phi_\\text{global}\\) is ${side(s.phiG)} one half and \\(\\phi_\\text{local}\\) is ${side(s.phiL)} one half in this ${MJ.name === "sf" ? "scale-free" : "random"} network. Regenerate to see how much they vary.`;
+}
+$("mNet").addEventListener("change", mLoad);
+$("mRegen").addEventListener("click", mLoad);
+
+/* ---------- generalized paradox ---------- */
+let G = null;
+function gLoad(){
+  const t = $("gNet").value;
+  const g = t === "sf" ? genBA(2000, 2) : t === "er" ? largestComponent(genER(2000, 4)) : fromData(t);
+  const lk = Array.from(g.deg, k => Math.log(k)), mu = lk.reduce((a, b) => a + b, 0) / g.N, sd = Math.sqrt(lk.reduce((a, b) => a + (b - mu) ** 2, 0) / g.N) || 1;
+  G = { g, z: lk.map(v => (v - mu) / sd) };
+  gNoise();
+}
+function gNoise(){
+  const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185 * v); };
+  G.eps = Array.from({ length: G.g.N }, gauss);
+  G.curve = []; for (let r = 0; r <= 1.0001; r += .05) G.curve.push([r, gEval(r)]);
+  drawG();
+}
+function gEval(rho){
+  const { g, z, eps } = G, N = g.N, x = new Float64Array(N), c = Math.sqrt(Math.max(0, 1 - rho * rho));
+  for (let i = 0; i < N; i++) x[i] = Math.exp(rho * z[i] + c * eps[i]);
+  let sx = 0, skx = 0, sk = 0, sego = 0, fm = 0, fmaj = 0;
+  for (let i = 0; i < N; i++){
+    let s = 0, more = 0;
+    for (let p = g.off[i]; p < g.off[i + 1]; p++){ const xj = x[g.nbr[p]]; s += xj; if (xj > x[i]) more++; }
+    const m = s / g.deg[i]; sego += m; if (x[i] < m) fm++; if (more / g.deg[i] > .5) fmaj++;
+    sx += x[i]; skx += g.deg[i] * x[i]; sk += g.deg[i];
+  }
+  return { mean: sx / N, alter: skx / sk, ego: sego / N, fm: fm / N, fmaj: fmaj / N };
+}
+function drawG(){
+  if (!G) return;
+  const rho = +$("gRIn").value, cur = gEval(rho);
+  $("gROut").textContent = rho.toFixed(2);
+  plot($("gCv"), {
+    x: { min: 0, max: 1, label: "correlation between log *x* and log *k*", fmt: v => (+v.toFixed(1)).toString() },
+    y: { min: 0, max: 1, label: "share of people", fmt: v => Math.round(v * 100) + "%" },
+    series: [
+      { type: "line", pts: [[0, .5], [1, .5]], color: "muted", dash: true, width: 1.3 },
+      { type: "line", pts: G.curve.map(([r, v]) => [r, v.fm]), color: "hub" }, { type: "line", pts: G.curve.map(([r, v]) => [r, v.fmaj]), color: "node" },
+      { type: "dots", pts: [[rho, cur.fm]], color: "hub", r: 6 }, { type: "dots", pts: [[rho, cur.fmaj]], color: "node", r: 6 }
+    ]
+  });
+  $("gStat").innerHTML = `<div>Average x over people</div><div>${cur.mean.toFixed(2)}</div>
+    <div style="color:var(--sf)">Average x over friendship ends</div><div style="color:var(--sf)">${cur.alter.toFixed(2)}</div>
+    <div style="color:var(--er)">Average of each person’s friends’ mean x</div><div style="color:var(--er)">${cur.ego.toFixed(2)}</div>
+    <div class="sep"></div>
+    <div>Friends’ mean x exceeds yours</div><div style="color:var(--hub)">${Math.round(cur.fm * 100)}%</div>
+    <div>Most of your friends have more x</div><div style="color:var(--node)">${Math.round(cur.fmaj * 100)}%</div>`;
+}
+$("gNet").addEventListener("change", gLoad);
+$("gRIn").addEventListener("input", drawG);
+$("gNoise").addEventListener("click", gNoise);
+
+/* ---------- redraw on resize / theme change ---------- */
+function redrawAll(){ readColors(); drawS(); drawR(); mView.draw(); drawQuad(mView.hover); drawG(); }
+let rT = 0;
+new ResizeObserver(() => { clearTimeout(rT); rT = setTimeout(redrawAll, 60); }).observe(document.body);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redrawAll);
+new MutationObserver(redrawAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+if (document.fonts) document.fonts.ready.then(redrawAll);
+
+/* ---------- typeset text the page writes later ---------- */
+const mathObs = new MutationObserver(recs => {
+  const els = new Set();
+  recs.forEach(r => { const el = r.target.nodeType === 1 ? r.target : r.target.parentElement; if (el && !(el instanceof SVGElement) && !el.closest(".katex") && /\\[\(\[]/.test(el.textContent)) els.add(el); });
+  if (!els.size) return;
+  mathObs.disconnect(); els.forEach(typeset); mathObs.observe(document.body, { childList: true, subtree: true, characterData: true });
+});
+mathObs.observe(document.body, { childList: true, subtree: true, characterData: true });
+
+/* ---------- start ---------- */
+drawHero();
+drawFeld();
+drawBip();
+const lazy = [[$("sampling"), sReset], [$("twoways"), rReset], [$("majority"), mLoad], [$("generalized"), gLoad]];
+const io = new IntersectionObserver(entries => {
+  entries.forEach(en => {
+    if (!en.isIntersecting) return;
+    const item = lazy.find(l => l[0] === en.target);
+    if (item && !item.done){ item.done = true; item[1](); io.unobserve(en.target); }
+  });
+}, { rootMargin: "200px" });
+lazy.forEach(l => io.observe(l[0]));
+})();
+</script>
+<script>if (window.renderMathInElement) renderMathInElement(document.body, { delimiters: [{ left: "\\[", right: "\\]", display: true }, { left: "\\(", right: "\\)", display: false }], throwOnError: false, fleqn: true });</script>
+</body>
+</html>
