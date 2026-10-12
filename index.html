@@ -62,6 +62,8 @@ canvas{display:block; width:100%; max-width:100%}
 @media (max-width:780px){ .chart.wide{aspect-ratio:4/3} }
 .scroll{overflow-x:auto}
 .scroll svg.graph{min-width:620px}
+.es-grid{margin-bottom:20px}
+.es-grid > *{min-width:0}
 svg.graph{display:block; width:100%; height:auto; overflow:visible}
 svg.graph [data-n]{cursor:pointer}
 svg.graph [data-n]:focus{outline:none}
@@ -202,7 +204,30 @@ h1.course-title{margin-top:48px !important}
   <h2>It is a sampling bias</h2>
   <p>Pick a person at random and every person is equally likely: their degree follows the degree distribution \(p(k)\). Pick a friend instead and you arrive by following a link, and a person with \(k\) friends can be reached along \(k\) different links. So a friend is \(k\) times more likely to have \(k\) friends, and the friend’s degree follows</p>
   <p class="formula big">\[ q(k) = \frac{k\,p(k)}{\langle k\rangle}, \qquad \langle k_\text{friend}\rangle = \sum_k k\,q(k) = \frac{\langle k^2\rangle}{\langle k\rangle} \ge \langle k\rangle \]</p>
-  <p>The inequality holds because \(\langle k^2\rangle - \langle k\rangle^2 = \langle (k-\langle k\rangle)^2\rangle \ge 0\). In fact the gap is exactly \(\langle k_\text{friend}\rangle - \langle k\rangle = \sigma_k^2/\langle k\rangle\): the more unequal the degrees, the stronger the paradox. Hubs are simply easier to see. Run the survey yourself below with three ways of sampling.</p>
+  <p>The inequality holds because \(\langle k^2\rangle - \langle k\rangle^2 = \langle (k-\langle k\rangle)^2\rangle \ge 0\). In fact the gap is exactly \(\langle k_\text{friend}\rangle - \langle k\rangle = \sigma_k^2/\langle k\rangle\): the more unequal the degrees, the stronger the paradox. Hubs are simply easier to see.</p>
+  <p>Following a link is <em>edge sampling</em>. Instead of choosing among the \(N\) people, choose among the \(M\) friendships: pick one at random, then one of its two ends with a coin flip. The network has \(2M\) friendship ends, and a person with \(k_i\) friends owns exactly \(k_i\) of them, so</p>
+  <p class="formula big">\[ P(\text{reach } i) = \frac{k_i}{2M} = \frac{k_i}{N\langle k\rangle} \]</p>
+  <p>Take the four people from the top of the page. Their three friendships have six ends between them, and 😎 holds three of the six. Pick a friendship (one chance in three each), flip a coin for which end you take, and you reach 😎 half the time, even though 😎 is one person in four.</p>
+  <div class="controls">
+    <button id="esPick" type="button">Pick a friendship</button>
+    <button id="esMany" type="button">Pick 100</button>
+    <button id="esReset" type="button">Start over</button>
+  </div>
+  <div class="hero-grid es-grid">
+    <div class="sheet">
+      <svg class="graph es" id="esSvg" viewBox="0 0 680 320" role="img" aria-label="The four-person star, its three friendships listed with both ends, and the chance of picking each friendship"></svg>
+      <p class="note" id="esNote" aria-live="polite" style="margin-top:8px"></p>
+    </div>
+    <div class="sheet">
+      <h3>Who you reach</h3>
+      <div class="scroll"><table class="ranks">
+        <thead><tr><th style="width:auto"></th><th style="color:var(--node)">Random person</th><th style="color:var(--sf)">End of a random friendship</th><th id="esHead">Your picks</th></tr></thead>
+        <tbody id="esBody"></tbody>
+      </table></div>
+      <p class="note" style="margin-top:12px">The friendship-end average, (1 + 1 + 1 + 3 + 3 + 3)/6 = 2, is the ⟨k<sub>friend</sub>⟩ at the top of the page. Listing every friend of every person and listing every friendship end give the same six entries.</p>
+    </div>
+  </div>
+  <p>Adding this up over the \(N p(k)\) people with \(k\) friends gives \(q(k)\) again. Picking a random person (node sampling) treats a hub with 100 friends and a loner with one friend alike; edge sampling meets the hub a hundred times as often. Nobody in the survey misreports anything. The bias comes entirely from where you start: every friendship is equally likely, so every person is counted once per friend. Run the survey yourself below with three ways of sampling: a random person, the end of a random friendship, and a random friend of a random person, which mixes the two and which the next section takes up.</p>
   <div class="controls">
     <label class="ctl">Network
       <select id="sNet">
@@ -778,6 +803,56 @@ function drawHero(){
   else { const who = H.emoji ? H.names[heroSel] : H.names[heroSel], fr = [...nbSel];
     $("heroPick").innerHTML = `${who} has ${k[heroSel]} friend${k[heroSel] > 1 ? "s" : ""}, who have ${fr.map(j => k[j]).join(", ")} friends: ${knnQ[heroSel].show()} on average.`; }
 }
+/* ---------- edge sampling, by hand ---------- */
+const ES = { names: HERO.star.names, k: [1, 1, 1, 3], pos: [[120,58],[55,262],[185,262],[120,162]], edges: HERO.star.edges, rowY: [72,158,244] };
+let esLast = null, esN = 0; const esC = { 1: 0, 3: 0 };
+function drawES(){
+  const svg = $("esSvg"), hit = esLast ? ES.edges[esLast.e][esLast.s] : -1;
+  // side by side when there is room, star above the friendship list on narrow screens
+  const wide = svg.parentElement.clientWidth >= 520;
+  const L = wide ? { sx: 0, cx: [360, 500], fx: 605, ry: 0 } : { sx: 80, cx: [140, 280], fx: 368, ry: 330 };
+  svg.setAttribute("viewBox", wide ? "0 0 680 320" : "0 0 400 650");
+  svg.textContent = "";
+  const txt = (x, y, str, style, anchor = "middle") => { const t = svgEl("text", { x, y, "text-anchor": anchor, style: style + ";paint-order:stroke;stroke:var(--sheet);stroke-width:4px" }, svg); t.innerHTML = str; return t; };
+  const kLab = (x, y, k, anchor) => txt(x, y, `<tspan style="font:italic 17px 'Times New Roman', Times, serif">k</tspan> = ${k}`, "font:600 14px var(--body);fill:var(--ink)", anchor);
+  const person = (x, y, i, on, dim) => {
+    const g = svgEl("g", { style: `opacity:${dim ? .4 : 1}` }, svg);
+    svgEl("circle", { cx: x, cy: y, r: 22, style: `fill:var(--sheet);stroke:${on ? "var(--sf)" : "var(--ink)"};stroke-width:${on ? 4 : 2.5}` }, g);
+    if (on) svgEl("circle", { cx: x, cy: y, r: 20, style: "fill:var(--sf);fill-opacity:.25" }, g);
+    const t = svgEl("text", { x, y: y + 2, "text-anchor": "middle", "dominant-baseline": "middle", style: "font:22px system-ui, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif" }, g); t.textContent = ES.names[i];
+  };
+  // the star
+  ES.edges.forEach(([a, b], e) => { const on = esLast && esLast.e === e;
+    svgEl("line", { x1: ES.pos[a][0] + L.sx, y1: ES.pos[a][1], x2: ES.pos[b][0] + L.sx, y2: ES.pos[b][1], style: `stroke:${on ? "var(--sf)" : "var(--ink)"};stroke-width:${on ? 4.5 : 3};stroke-linecap:round;stroke-opacity:${on ? 1 : .7}` }, svg); });
+  for (let i = 0; i < 4; i++) person(ES.pos[i][0] + L.sx, ES.pos[i][1], i, i === hit, false);
+  kLab(154 + L.sx, 63, 1, "start"); kLab(154 + L.sx, 167, 3, "start"); kLab(55 + L.sx, 305, 1); kLab(185 + L.sx, 305, 1);
+  // the six friendship ends, one row per friendship
+  if (wide){ txt(430, 18, "Flip a coin for the end", "font:13px var(--body);fill:var(--muted)"); txt(605, 18, "Pick a friendship", "font:13px var(--body);fill:var(--muted)"); }
+  else txt(200, L.ry + 18, "Pick a friendship (1/3), then flip a coin for the end", "font:13px var(--body);fill:var(--muted)");
+  L.cx.forEach((x, s) => { const on = esLast && esLast.s === s;
+    svgEl("rect", { x: x - 52, y: L.ry + 32, width: 104, height: 270, rx: 52, style: `fill:none;stroke:var(--sf);stroke-width:${on ? 2.5 : 1.5};stroke-opacity:${on ? 1 : .5}` }, svg); });
+  ES.edges.forEach(([a, b], e) => { const y = ES.rowY[e] + L.ry, on = esLast && esLast.e === e, dim = esLast && !on;
+    svgEl("line", { x1: L.cx[0], y1: y, x2: L.cx[1], y2: y, style: `stroke:${on ? "var(--sf)" : "var(--ink)"};stroke-width:${on ? 4 : 2.5};stroke-opacity:${dim ? .25 : .7}` }, svg);
+    [a, b].forEach((i, s) => { const x = L.cx[s]; person(x, y, i, on && esLast.s === s, dim); const t = kLab(x, y + 42, ES.k[i]); if (dim) t.style.opacity = .4; });
+    txt(L.fx, y + 7, "1/3", `font:600 20px var(--display);fill:${on ? "var(--sf)" : "var(--muted)"}`);
+  });
+  // note and table
+  if (!esLast) $("esNote").textContent = "Pick a friendship to start. Each person is reached once for every friendship they are in.";
+  else { const [a, b] = ES.edges[esLast.e], who = ES.names[hit], k = ES.k[hit];
+    $("esNote").textContent = `Friendship ${ES.names[a]}–${ES.names[b]} (chance 1/3), then the ${esLast.s ? "right" : "left"} end (chance 1/2): you reach ${who}, who has ${k} friend${k > 1 ? "s" : ""}. ${who} can be reached ${k === 3 ? "three ways, so 3 × 1/6 = 1/2" : "only this way, so 1/6"}.`; }
+  const pick = k => esN ? (esC[k] / esN).toFixed(2) : "–";
+  $("esHead").textContent = esN ? `Your ${esN} pick${esN > 1 ? "s" : ""}` : "Your picks";
+  const mean = esN ? ((esC[1] + 3 * esC[3]) / esN).toFixed(2) : "–";
+  $("esBody").innerHTML =
+    `<tr><td style="width:auto;white-space:nowrap"><i>k</i> = 1</td><td>3/4</td><td>3/6 = 1/2</td><td>${pick(1)}</td></tr>` +
+    `<tr><td style="width:auto;white-space:nowrap"><i>k</i> = 3</td><td>1/4</td><td>3/6 = 1/2</td><td>${pick(3)}</td></tr>` +
+    `<tr><td style="width:auto;white-space:nowrap">Average <i>k</i></td><td style="color:var(--node);font-weight:600">1.5</td><td style="color:var(--sf);font-weight:600">2</td><td style="font-weight:600">${mean}</td></tr>`;
+}
+function esDraw(n){ for (let t = 0; t < n; t++){ esLast = { e: rnd(3), s: rnd(2) }; esC[ES.k[ES.edges[esLast.e][esLast.s]]]++; esN++; } drawES(); }
+$("esPick").addEventListener("click", () => esDraw(1));
+$("esMany").addEventListener("click", () => esDraw(100));
+$("esReset").addEventListener("click", () => { esLast = null; esN = 0; esC[1] = esC[3] = 0; drawES(); });
+
 $("heroSvg").addEventListener("click", e => { const n = e.target.closest("[data-n]"); if (n){ heroSel = heroSel === +n.dataset.n ? -1 : +n.dataset.n; drawHero(); } });
 $("heroSvg").addEventListener("keydown", e => { const n = e.target.closest("[data-n]"); if (n && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); heroSel = heroSel === +n.dataset.n ? -1 : +n.dataset.n; drawHero(); const el = $("heroSvg").querySelector(`[data-n="${n.dataset.n}"]`); if (el) el.focus(); } });
 document.querySelectorAll('input[name="heroNet"]').forEach(r => r.addEventListener("change", () => { heroSel = -1; drawHero(); }));
@@ -1083,7 +1158,7 @@ $("gRIn").addEventListener("input", drawG);
 $("gNoise").addEventListener("click", gNoise);
 
 /* ---------- redraw on resize / theme change ---------- */
-function redrawAll(){ readColors(); drawS(); drawR(); mView.draw(); drawQuad(mView.hover); drawG(); }
+function redrawAll(){ readColors(); drawES(); drawS(); drawR(); mView.draw(); drawQuad(mView.hover); drawG(); }
 let rT = 0;
 new ResizeObserver(() => { clearTimeout(rT); rT = setTimeout(redrawAll, 60); }).observe(document.body);
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redrawAll);
@@ -1101,6 +1176,7 @@ mathObs.observe(document.body, { childList: true, subtree: true, characterData: 
 
 /* ---------- start ---------- */
 drawHero();
+drawES();
 drawFeld();
 drawBip();
 const lazy = [[$("sampling"), sReset], [$("twoways"), rReset], [$("majority"), mLoad], [$("generalized"), gLoad]];
