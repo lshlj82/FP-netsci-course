@@ -120,6 +120,9 @@ code{font-size:14px; background:var(--grid-minor); padding:1px 5px; border-radiu
 footer{padding:48px 0 64px; font-size:14px; color:var(--muted)}
 footer p{max-width:80ch}
 .status{font-size:13px; color:var(--muted); min-height:1.4em}
+.related{margin-top:32px; border-left:4px solid var(--sf)}
+.related p{margin-bottom:.6em}
+.related a{color:var(--focus); font-weight:600; text-underline-offset:3px}
 @media (prefers-reduced-motion: reduce){ .tip{transition:none} }
 
 .eq{padding:12px 0; border-bottom:1px solid var(--grid-minor)}
@@ -372,6 +375,12 @@ h1.course-title{margin-top:48px !important}
       <div class="stat" id="gStat"></div>
       <p class="note" style="margin-top:14px">Even with no link to degree, the mean-based share sits above one half: in a skewed distribution the mean is pulled up by a few large values, so a typical person falls below their friends’ mean. The median-based share starts below one half, because it needs strictly more than half of your friends to beat you, and climbs only as x follows degree more closely.</p>
     </div>
+  </div>
+  <div class="sheet related">
+    <h3>Go further: the Friendship Paradox Explorer</h3>
+    <p>The majority-type questions in this demo come from two papers by Sang Hoon Lee, and they have their own interactive companion. In the <a href="https://lshlj82.github.io/friendship-paradox/">Friendship Paradox Explorer</a> you can draw a network node by node and watch &langle;<i>k</i><sub>friend</sub>&rangle;, &langle;<i>k</i><sub>nn</sub>&rangle;, &phi;<sub>global</sub> and &phi;<sub>local</sub> change as you add or remove each link, or hover over any node in the karate club and college football networks to see why it is or is not dominated by its friends.</p>
+    <p class="note" lang="ko">이상훈 교수의 친구 역설 논문 두 편과 함께 보는 「친구 역설 탐색기」에서는 네트워크를 직접 그려 가며 네 가지 양이 어떻게 달라지는지 확인할 수 있습니다.</p>
+    <p style="margin:0"><a href="https://lshlj82.github.io/friendship-paradox/">Open the explorer →</a></p>
   </div>
 </section>
 </main>

@@ -43,4 +43,7 @@ Open `index.html` in any modern browser. To host it with GitHub Pages, push this
 - F. Menczer, S. Fortunato, and C. A. Davis, *A First Course in Network Science* (Cambridge University Press, 2020), Chapter 3.
 - W. W. Zachary, *J. Anthropol. Res.* 33, 452 (1977); M. Girvan and M. E. J. Newman, *Proc. Natl. Acad. Sci. USA* 99, 7821 (2002).
 
-See also the companion explorer at https://lshlj82.github.io/friendship-paradox/.
+## Related
+
+- **Course page:** this demo is demo 8 of the [Network Science course demos](https://lshlj82.github.io/netsci-course-GNU/) for the Department of Physics, Gyeongsang National University.
+- **Research explorer:** the [Friendship Paradox Explorer](https://lshlj82.github.io/friendship-paradox/) ([source](https://github.com/lshlj82/friendship-paradox)), an interactive companion to the two papers by S. H. Lee listed above, where you can also draw your own network.
