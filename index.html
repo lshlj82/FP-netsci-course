@@ -670,8 +670,10 @@ class Q{
   add(o){ return new Q(this.n * o.d + o.n * this.d, this.d * o.d); }
   div(k){ return new Q(this.n, this.d * k); }
   get v(){ return this.n / this.d; }
+  // true when two decimals represent the value exactly (e.g. 3/2 = 1.50), so "=" is used instead of "≈"
+  get exact2(){ return (this.n * 100) % this.d === 0; }
   str(){ return this.d === 1 ? String(this.n) : `${this.n}/${this.d}`; }
-  show(){ return this.d === 1 ? String(this.n) : `${this.n}/${this.d} ≈ ${this.v.toFixed(2)}`; }
+  show(){ return this.d === 1 ? String(this.n) : `${this.n}/${this.d} ${this.exact2 ? "=" : "≈"} ${this.v.toFixed(2)}`; }
 }
 
 /* ---------- friendship-paradox statistics ---------- */
@@ -793,7 +795,7 @@ function drawHero(){
   const ends = []; for (let i = 0; i < N; i++) for (let p = g.off[i]; p < g.off[i + 1]; p++) ends.push(k[g.nbr[p]]);
   const kfQ = new Q(ends.reduce((a, b) => a + b, 0), ends.length);
   let knSum = new Q(0); knnQ.forEach(q => knSum = knSum.add(q)); const knQ = knSum.div(N);
-  const qT = q => q.d === 1 ? String(q.n) : `${q.n}/${q.d} \\approx ${q.v.toFixed(2)}`, qS = q => q.d === 1 ? String(q.n) : `${q.n}/${q.d}`;
+  const qT = q => q.d === 1 ? String(q.n) : `${q.n}/${q.d} ${q.exact2 ? "=" : "\\approx"} ${q.v.toFixed(2)}`, qS = q => q.d === 1 ? String(q.n) : `${q.n}/${q.d}`;
   setMath($("eqK"), `\\(\\langle k\\rangle = (${degs.join(" + ")})\\,/\\,${N} = \\htmlClass{res k}{${qT(kQ)}}\\)`);
   setMath($("eqKF"), `\\(\\langle k_\\text{friend}\\rangle = (${ends.join(" + ")})\\,/\\,${ends.length} = \\htmlClass{res kf}{${qT(kfQ)}}\\)`);
   setMath($("eqKN"), `\\(\\langle k_\\text{nn}\\rangle = (${knnQ.map(qS).join(" + ")})\\,/\\,${N} = \\htmlClass{res kn}{${qT(knQ)}}\\)`);
