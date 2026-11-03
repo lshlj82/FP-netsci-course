@@ -13,7 +13,7 @@
 <style>
 :root{
   --paper:#EDF2F5; --sheet:#F9FBFC; --ink:#1B2A3A; --muted:#566676; --grid:#D2DDE5; --grid-minor:#E3EAF0;
-  --er:#2F8A4C; --sf:#6A3D9E; --hub:#D21F3C; --node:#2C5F8E; --path:#C8700A; --edge:rgba(27,42,58,.22); --focus:#1F6FB2;
+  --er:#24733D; --sf:#6A3D9E; --hub:#D21F3C; --node:#2C5F8E; --path:#A65B00; --edge:rgba(27,42,58,.22); --focus:#1F6FB2;
   --display:"Source Serif 4",Georgia,"Times New Roman",serif;
   --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   box-sizing:border-box;
@@ -65,7 +65,7 @@ canvas{display:block; width:100%; max-width:100%}
 .es-grid{margin-bottom:20px}
 .es-grid > *{min-width:0}
 svg.graph{display:block; width:100%; height:auto; overflow:visible}
-svg.graph [data-n]{cursor:pointer}
+svg.graph [data-n][role="button"]{cursor:pointer}
 svg.graph [data-n]:focus{outline:none}
 svg.graph [data-n]:focus-visible circle.body{stroke:var(--focus); stroke-width:4}
 .controls{display:flex; flex-wrap:wrap; gap:18px 26px; align-items:end; margin:18px 0}
@@ -323,9 +323,9 @@ h1.course-title{margin-top:48px !important}
   <p class="formula big">\[ \langle k_\text{nn}\rangle = \frac{1}{m+n}\left(\frac{m}{n}\,mn + \frac{n}{m}\,nm\right) = \frac{m^2+n^2}{m+n} = \frac{mn^3+nm^3}{mn^2+nm^2} = \frac{\langle k^3\rangle}{\langle k^2\rangle} \]</p>
   <p>With \(m = 1\) it is a star: the four-person network at the top is \(K_{1,3}\). NetworkX’s <code>nx.complete_bipartite_graph(4, 5)</code> gives \(\langle k_\text{nn}\rangle = 4.5556\), the same as \(\langle k^3\rangle/\langle k^2\rangle\).</p>
   <div class="controls">
-    <label class="ctl">Group size m <output id="bmOut">4</output>
+    <label class="ctl" for="bmIn">Group size m <output id="bmOut">4</output>
       <input type="range" id="bmIn" min="1" max="8" step="1" value="4"></label>
-    <label class="ctl">Group size n <output id="bnOut">5</output>
+    <label class="ctl" for="bnIn">Group size n <output id="bnOut">5</output>
       <input type="range" id="bnIn" min="1" max="10" step="1" value="5"></label>
   </div>
   <div class="two">
@@ -383,7 +383,7 @@ h1.course-title{margin-top:48px !important}
         <option value="er">Random, 2,000 people</option>
         <option value="football">College football, 115 teams</option>
       </select></label>
-    <label class="ctl">How closely \(x\) follows degree <output id="gROut">0.6</output>
+    <label class="ctl" for="gRIn">How closely \(x\) follows degree <output id="gROut">0.6</output>
       <input type="range" id="gRIn" min="0" max="1" step="0.05" value="0.6"></label>
     <button id="gNoise" type="button">Draw new attributes</button>
   </div>
@@ -628,8 +628,9 @@ function svgEl(tag, attrs, parent){ const e = document.createElementNS(NS, tag);
 function makeSmall(svg, pos, edgeList, onPick){
   const N = pos.length, flat = []; edgeList.forEach(([a, b]) => flat.push(a, b));
   const g = build(N, flat);
-  svg.addEventListener("click", e => { const n = e.target.closest("[data-n]"); if (n) onPick(+n.dataset.n); });
-  svg.addEventListener("keydown", e => { const n = e.target.closest("[data-n]"); if (n && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); onPick(+n.dataset.n); } });
+  // without onPick the drawing is a static picture (role=img), so its nodes are not focusable buttons
+  if (onPick) svg.addEventListener("click", e => { const n = e.target.closest("[data-n]"); if (n) onPick(+n.dataset.n); });
+  if (onPick) svg.addEventListener("keydown", e => { const n = e.target.closest("[data-n]"); if (n && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); onPick(+n.dataset.n); } });
   return { g, pos, render(o){
     const focused = document.activeElement && svg.contains(document.activeElement) ? document.activeElement.dataset.n : null;
     svg.textContent = "";
@@ -642,7 +643,7 @@ function makeSmall(svg, pos, edgeList, onPick){
       const tx = svgEl("text", { x: mx, y: my - 10, "text-anchor": "middle", style: "fill:var(--path);font:600 14px var(--body);paint-order:stroke;stroke:var(--sheet);stroke-width:4px" }, svg); tx.textContent = t; });
     for (let i = 0; i < N; i++){
       const r = o.r ? o.r(i) : 18;
-      const ng = svgEl("g", { "data-n": i, tabindex: 0, role: "button", "aria-label": o.aria ? o.aria(i) : `Node ${i + 1}` }, svg);
+      const ng = svgEl("g", onPick ? { "data-n": i, tabindex: 0, role: "button", "aria-label": o.aria ? o.aria(i) : `Node ${i + 1}` } : { "data-n": i }, svg);
       svgEl("circle", { cx: pos[i][0], cy: pos[i][1], r: r + 8, style: "fill:transparent" }, ng);
       svgEl("circle", { class: "body", cx: pos[i][0], cy: pos[i][1], r, style: `fill:var(--sheet);stroke:${o.stroke ? o.stroke(i) : "var(--ink)"};stroke-width:${o.strokeW ? o.strokeW(i) : 2.5}` }, ng);
       if (o.fill){ const [col, op] = o.fill(i); svgEl("circle", { cx: pos[i][0], cy: pos[i][1], r: r - 1, style: `fill:${col};fill-opacity:${op};pointer-events:none` }, ng); }
@@ -872,6 +873,7 @@ function sReset(){
   sMore();
 }
 function sMore(){
+  if (!S) return sReset(); // clicked before the lazy start reached this section
   const { g } = S, N = g.N, L = g.nbr.length;
   for (let t = 0; t < 1000; t++){
     const a = g.deg[rnd(N)], b = g.deg[g.nbr[rnd(L)]];
@@ -986,6 +988,7 @@ function rSwaps(mode, n){
 }
 function rRecord(){ R.traj.push(fpStats(build(R.N, R.e))); }
 async function rRun(mode){
+  if (!R) rReset(); // clicked before the lazy start reached this section
   const tok = ++rBusy;
   for (let b = 0; b < 25; b++){
     rSwaps(mode, 160); rRecord(); drawR();
@@ -1025,7 +1028,7 @@ function drawBip(){
   for (let j = 0; j < n; j++) pos.push([230, 20 + step * (j + .5) + (H - n) * step / 2]);
   for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) edges.push([i, m + j]);
   const svg = $("bipSvg"), fresh = svg.cloneNode(false); svg.replaceWith(fresh);
-  const v = makeSmall(fresh, pos, edges, () => {});
+  const v = makeSmall(fresh, pos, edges, null);
   const r = Math.min(13, step * .38);
   v.render({ r: () => r, fill: () => ["var(--hub)", .85], stroke: () => "var(--hub)", strokeW: () => 1.5, edgeColor: () => "var(--ink)", edgeOpacity: () => .45, edgeWidth: () => 1.2, aria: i => `Node in group ${i < m ? "m" : "n"}` });
   const st = fpStats(v.g);
@@ -1118,6 +1121,7 @@ function gLoad(){
   gNoise();
 }
 function gNoise(){
+  if (!G) return gLoad(); // clicked before the lazy start reached this section
   const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185 * v); };
   G.eps = Array.from({ length: G.g.N }, gauss);
   G.curve = []; for (let r = 0; r <= 1.0001; r += .05) G.curve.push([r, gEval(r)]);
@@ -1181,12 +1185,13 @@ drawHero();
 drawES();
 drawFeld();
 drawBip();
-const lazy = [[$("sampling"), sReset], [$("twoways"), rReset], [$("majority"), mLoad], [$("generalized"), gLoad]];
+// the third entry tells whether a control already started the section, so it is never started twice
+const lazy = [[$("sampling"), sReset, () => S], [$("twoways"), rReset, () => R], [$("majority"), mLoad, () => MJ], [$("generalized"), gLoad, () => G]];
 const io = new IntersectionObserver(entries => {
   entries.forEach(en => {
     if (!en.isIntersecting) return;
     const item = lazy.find(l => l[0] === en.target);
-    if (item && !item.done){ item.done = true; item[1](); io.unobserve(en.target); }
+    if (item && !item.done){ item.done = true; if (!item[2]()) item[1](); io.unobserve(en.target); }
   });
 }, { rootMargin: "200px" });
 lazy.forEach(l => io.observe(l[0]));
